@@ -1,0 +1,174 @@
+@startuml
+title P2 – Gestión de Órdenes de Servicio de un Taller Mecánico
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package modelo {
+  interface Cotizable {
+    {static} +TASA_IMPUESTO : double
+    +clave() : Folio
+    +nombre() : String
+    +precioBase() : double
+    +tarifa(u : int) : double
+    +tarifaConImpuesto(u : int) : double
+    {static} +porNombre() : Comparator
+  }
+  interface ConGarantia {
+    +mesesGarantia() : int
+    +descripcionCorta() : String
+  }
+  interface Certificable {
+    +norma() : String
+    +descripcionCorta() : String
+  }
+  abstract class Concepto <<sealed>> {
+    -clave : Folio
+    -nombre : String
+    -precioBase : double
+    -creadoEn : LocalDateTime
+    -cotizaciones : int <<transient>>
+    +tarifa(u : int) : double <<final>>
+    {abstract} #calcularTarifa(u : int) : double
+    {abstract} +copiar() : Concepto
+  }
+  class "Concepto.Refaccion" as Refaccion <<static final>> {
+    {static} +PREFIJO : String = "REF"
+    -marca : String
+    #calcularTarifa(u : int) : double
+    +copiar() : Refaccion
+  }
+  class "Concepto.ManoDeObra" as ManoDeObra <<static final>> {
+    {static} +PREFIJO : String = "MOB"
+    -nivelTecnico : int
+    #calcularTarifa(u : int) : double
+    +copiar() : ManoDeObra
+  }
+  class "Concepto.Diagnostico" as Diagnostico <<static final>> {
+    {static} +PREFIJO : String = "DIA"
+    -equipo : String
+    #calcularTarifa(u : int) : double
+    +copiar() : Diagnostico
+  }
+  class Folio <<record>> {
+    prefijo : String
+    numero : int
+    {static} +siguiente(prefijo : String) : Folio
+    {static} +parse(texto : String) : Folio
+  }
+  enum Nivel {
+    OCASIONAL
+    FRECUENTE
+    FLOTILLA
+    +aplicar(monto : double) : double
+  }
+  enum Estado {
+    ABIERTA
+    EN_CURSO
+    CERRADA
+    CANCELADA
+    +permiteTransicionA(d : Estado) : boolean
+  }
+  class Cliente <<Externalizable>> {
+    -id : int
+    -nombre : String
+    -correo : String
+    -nivel : Nivel
+  }
+  class OrdenServicio {
+    -id : int
+    -fecha : LocalDate
+    -estado : Estado
+    +agregar(e : Concepto, u : int) : Linea
+    +cambiarEstado(d : Estado)
+    +total() : double
+  }
+  class "OrdenServicio.Linea" as Linea <<inner>> {
+    -unidades : int
+    +importe() : double
+  }
+  class CatalogoConceptos {
+    +agregar(e : Concepto...)
+    +filtrar(r : Regla) : List
+    {static} +porTarifa(u : int) : Comparator
+    +resumen() : String
+  }
+  class "CatalogoConceptos.Iterador" as Iterador <<private inner>>
+}
+
+package funcional {
+  interface "Regla<T>" as Regla <<functional>> {
+    +evaluar(t : T) : boolean
+    +y(o) : Regla
+    +o(o) : Regla
+    +negar() : Regla
+  }
+  interface "FabricaElemento<E extends Concepto, A>" as Fabrica <<functional>> {
+    +crear(nombre, precio, atributo : A) : E
+  }
+}
+
+package concurrencia {
+  abstract class TareaPeriodica implements Runnable {
+    -activa : boolean <<volatile>>
+    +iniciar(nombre : String)
+    +detener()
+    {abstract} #ejecutarCiclo()
+  }
+}
+
+package eventos {
+  interface OyenteEvento <<functional>>
+  class Evento <<record>>
+}
+
+package persistencia {
+  interface "Repositorio<T,K>" as Repositorio
+  class RepositorioConceptoSQLite
+  class RepositorioClienteSQLite
+  class RepositorioOrdenServicioSQLite
+  class ConexionSQLite
+  class Respaldo
+}
+
+package servicio {
+  class Taller {
+    +registrar(f : FabricaElemento, ...) : E
+    +abrir(id : int) : OrdenServicio
+    +revisar() : int
+    +iniciarMonitor(ms : long)
+  }
+  class "Taller.MonitorAvance" as Monitor <<inner>>
+}
+
+Concepto ..|> Cotizable
+Refaccion --|> Concepto
+Concepto +-- Refaccion
+Refaccion ..|> ConGarantia
+ManoDeObra --|> Concepto
+Concepto +-- ManoDeObra
+ManoDeObra ..|> Certificable
+Diagnostico --|> Concepto
+Concepto +-- Diagnostico
+Diagnostico ..|> ConGarantia
+Diagnostico ..|> Certificable
+OrdenServicio *-- "1..*" Linea
+OrdenServicio +-- Linea
+Linea --> "1" Concepto
+OrdenServicio --> "1" Cliente
+OrdenServicio --> Estado
+Cliente --> Nivel
+CatalogoConceptos o-- "0..*" Concepto
+CatalogoConceptos +-- Iterador
+CatalogoConceptos ..> Regla
+Fabrica ..> Concepto
+Taller +-- Monitor
+Monitor --|> TareaPeriodica
+Taller o-- "0..*" OyenteEvento
+Taller --> CatalogoConceptos
+Taller --> Repositorio
+RepositorioConceptoSQLite ..|> Repositorio
+RepositorioClienteSQLite ..|> Repositorio
+RepositorioOrdenServicioSQLite ..|> Repositorio
+RepositorioOrdenServicioSQLite --> ConexionSQLite
+OyenteEvento ..> Evento
+@enduml
