@@ -12,6 +12,7 @@ public interface ConGarantia {
 
     default String descripcionCorta() {
         // TODO E05: Devolver "Garantía (meses): " concatenado con el valor de mesesGarantia().
-        throw new UnsupportedOperationException("TODO E05");
+        return "Garantía (meses): " + mesesGarantia();
+        //throw new UnsupportedOperationException("TODO E05");
     }
 }

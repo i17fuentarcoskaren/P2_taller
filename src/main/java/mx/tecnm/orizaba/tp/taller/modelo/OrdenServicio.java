@@ -48,7 +48,19 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
     /** Constructor completo (también usado al reconstruir desde la base de datos). */
     public OrdenServicio(int id, Cliente cliente, LocalDate fecha) {
         // TODO E07: Validar id > 0, actor y fecha no nulos; asignar y sincronizar SECUENCIA con accumulateAndGet(id, Math::max).
-        throw new UnsupportedOperationException("TODO E07");
+        if (id <=0){
+            throw new ReglaNegocioException("El ID debe de ser mayor a 0");
+        }
+        //validar referencias
+        Objects.requireNonNull(cliente);
+        Objects.requireNonNull(fecha);
+        //Asignar atributos
+        this.id = id;
+        this.cliente = cliente;
+        this.fecha = fecha;
+        //Actualizar el valor AtomicInteger con accumulateAndGet
+        SECUENCIA.accumulateAndGet(id, Math::max);
+        //throw new UnsupportedOperationException("TODO E07");
     }
 
     public int id() {
@@ -70,18 +82,48 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
     /** Agrega una línea; sólo es posible mientras está ABIERTA y sin repetir concepto. */
     public synchronized Linea agregar(Concepto elemento, int unidades) {
         // TODO E07: Exigir estado ABIERTA, rechazar elementos repetidos (stream anyMatch), crear la Linea interna y añadirla.
-        throw new UnsupportedOperationException("TODO E07");
+        if (estado != Estado.ABIERTA){
+            throw new ReglaNegocioException("La orden debe de estar abierta para agregar elementos");
+        }
+        //validar referencia del elemento
+        boolean repetido= lineas.stream().anyMatch(linea -> linea.elemento().clave().equals(elemento.clave()));
+        if (repetido){
+            throw new ReglaNegocioException("El concepto ya existe en la orden");
+        }
+        //Crear la línea interna y añadirla a la lista
+        Linea nuevaLinea = new Linea(elemento, unidades);
+        //agregar la lista
+        lineas.add(nuevaLinea);
+        //Devuelve nueva linea
+        return nuevaLinea;
+        //throw new UnsupportedOperationException("TODO E07");
     }
 
     /** Quita la línea del concepto indicado (sólo en estado ABIERTA). */
     public synchronized boolean quitar(Folio clave) {
         // TODO E07: Exigir estado ABIERTA y eliminar con removeIf la línea cuyo elemento tenga esa clave.
-        throw new UnsupportedOperationException("TODO E07");
+        if (estado != Estado.ABIERTA){
+            throw new ReglaNegocioException("La orden debe de estar abierta para quitar lineas");
+        }
+        //validar la referencia de la clave
+        Objects.requireNonNull(clave, "La clave no puede ser nula");
+        //Eliminar con removeIf la línea cuyo elemento tenga esa clave
+        return lineas.removeIf(linea -> linea.elemento().clave().equals(clave));
+        //throw new UnsupportedOperationException("TODO E07");
     }
 
     public synchronized void cambiarEstado(Estado destino) {
         // TODO E07: Validar la transición con permiteTransicionA y exigir al menos una línea para pasar a EN_CURSO.
-        throw new UnsupportedOperationException("TODO E07");
+        //validar transaccion
+        if (!estado.permiteTransicionA(destino)){
+            throw new ReglaNegocioException("Transacción de estado no valida ");
+        }
+        if (destino == Estado.EN_CURSO && lineas.isEmpty()){
+            throw new ReglaNegocioException("La orden no tiene lineas");
+        }
+        //actualizar el estado
+        this.estado = destino;
+        //throw new UnsupportedOperationException("TODO E07");
     }
 
     public void iniciar() {
@@ -108,13 +150,19 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
     /** Suma de subtotales sin descuento. */
     public synchronized double subtotal() {
         // TODO E08: Sumar los subtotales de las líneas con mapToDouble y redondear a 2 decimales.
-        throw new UnsupportedOperationException("TODO E08");
+        //sumar subtotales de las lineas
+        double suma = lineas.stream().mapToDouble(linea-> linea.subtotal()).sum();
+        //redondear decimales
+        return redondear(suma);
+        //throw new UnsupportedOperationException("TODO E08");
     }
 
     /** Total con el descuento del nivel del cliente. */
     public synchronized double total() {
+        double suma = lineas.stream().mapToDouble(linea->linea.importe()).sum();
+        return redondear(suma);
         // TODO E08: Sumar los importes de las líneas (ya con descuento) y redondear a 2 decimales.
-        throw new UnsupportedOperationException("TODO E08");
+        //throw new UnsupportedOperationException("TODO E08");
     }
 
     public long diasDesde(LocalDate hoy) {
@@ -149,7 +197,12 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
 
         private Linea(Concepto elemento, int unidades) {
             // TODO E07: Validar unidades > 0 y asignar los campos.
-            throw new UnsupportedOperationException("TODO E07");
+            if (unidades <=0){
+                throw new ReglaNegocioException("Las unidades deben ser mayor a 0");
+            }
+            this.elemento = Objects.requireNonNull(elemento);
+            this.unidades = unidades;
+            //throw new UnsupportedOperationException("TODO E07");
         }
 
         public Concepto elemento() {
@@ -167,7 +220,8 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
         /** Importe con el descuento del nivel del cliente de la envolvente. */
         public double importe() {
             // TODO E08: Usar OrdenServicio.this.cliente.nivel().aplicar(subtotal()).
-            throw new UnsupportedOperationException("TODO E08");
+            return OrdenServicio.this.cliente.nivel().aplicar(subtotal());
+            //throw new UnsupportedOperationException("TODO E08");
         }
 
         public OrdenServicio contenedor() {

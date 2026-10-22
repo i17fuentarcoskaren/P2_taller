@@ -52,7 +52,13 @@ public abstract sealed class Concepto implements Cotizable, Serializable
     /** Constructor para objetos reconstruidos (persistencia) con clave conocida. */
     protected Concepto(Folio clave, String nombre, double precioBase) {
         // TODO E04: Asignar la clave (no nula), registrarla en Folio.registrar y validar nombre y precio mediante los setters.
-        throw new UnsupportedOperationException("TODO E04");
+        this.clave=Objects.requireNonNull(clave);
+        Folio.registrar(this.clave);
+        //validar nombre
+        setNombre(nombre);
+        //Guardar precioBase dentro del constructor
+        setPrecioBase(precioBase);
+        //throw new UnsupportedOperationException("TODO E04");
     }
 
     public static int instanciasCreadas() {
@@ -84,19 +90,35 @@ public abstract sealed class Concepto implements Cotizable, Serializable
 
     public final void setNombre(String nombre) {
         // TODO E04: Rechazar nombres nulos o en blanco (ReglaNegocioException); guardar el nombre sin espacios extremos.
-        throw new UnsupportedOperationException("TODO E04");
+        if (nombre == null || nombre.isBlank()){
+
+            throw new ReglaNegocioException ("El nombre no puede estar vacío");
+        }
+        this.nombre = nombre.strip();
+        //throw new UnsupportedOperationException("TODO E04");
+
     }
 
     public final void setPrecioBase(double precioBase) {
         // TODO E04: Rechazar precios negativos, NaN o infinitos (ReglaNegocioException).
-        throw new UnsupportedOperationException("TODO E04");
+        if (precioBase < 0 || !Double.isFinite(precioBase)){
+            throw new ReglaNegocioException ("El precio base debe ser mayor o igual a cero");
+        }
+        this.precioBase= precioBase;
+        //throw new UnsupportedOperationException("TODO E04");
     }
 
     /** Método plantilla: valida, contabiliza y redondea; la variación la aporta cada subtipo. */
     @Override
-    public final double tarifa(int unidades) {
+    public final double tarifa(int unidades){
+        if (unidades <=0){
+            throw new ReglaNegocioException ("Unidades no validas");
+        }
+        //Después se incrementa el contador
+        cotizaciones ++;
+        return Math.round(calcularTarifa(unidades) * 100.00)/ 100.00;
         // TODO E04: Validar unidades > 0 (ReglaNegocioException), incrementar cotizaciones y devolver calcularTarifa redondeada a 2 decimales.
-        throw new UnsupportedOperationException("TODO E04");
+        //throw new UnsupportedOperationException("TODO E04");
     }
 
     /** Punto de variación del Template Method. */
@@ -148,8 +170,12 @@ public abstract sealed class Concepto implements Cotizable, Serializable
         }
 
         private static String validar(String marca) {
+            if(!(marca != null && !marca.isBlank())){
+                throw new ReglaNegocioException ("La marca es obligatoria");
+            }
+            return marca;
             // TODO E05: Validar: marca != null && !marca.isBlank() (si no se cumple: ReglaNegocioException "La marca es obligatoria").
-            throw new UnsupportedOperationException("TODO E05");
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         public String marca() {
@@ -159,14 +185,18 @@ public abstract sealed class Concepto implements Cotizable, Serializable
         @Override
         protected double calcularTarifa(int unidades) {
             // TODO E05: Refacción: precio unitario por pieza. Fórmula: precioBase() * unidades
-            throw new UnsupportedOperationException("TODO E05");
+            //Regresa el metodo tarifa de la clase padre
+            return precioBase() * unidades;
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         /** Retorno covariante: devuelve Refaccion, no Concepto. */
         @Override
         public Refaccion copiar() {
             // TODO E05: Crear un nuevo Refaccion con el mismo nombre, precio y atributo (clave nueva).
-            throw new UnsupportedOperationException("TODO E05");
+            //Retorno covariente
+            return new Refaccion(nombre(), precioBase(), marca());
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         @Override
@@ -204,7 +234,13 @@ public abstract sealed class Concepto implements Cotizable, Serializable
 
         private static int validar(int nivelTecnico) {
             // TODO E05: Validar: nivelTecnico >= 1 && nivelTecnico <= 3 (si no se cumple: ReglaNegocioException "El nivel técnico debe estar entre 1 y 3").
-            throw new UnsupportedOperationException("TODO E05");
+            // Validar que el nivel esté entre 1 y 3
+            if (nivelTecnico < 1 || nivelTecnico > 3){
+                throw new ReglaNegocioException("El nivel técnico debe estar entre 1 y 3");
+            }
+            // Si es válido, devolver el nivel
+            return nivelTecnico;
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         public int nivelTecnico() {
@@ -214,14 +250,17 @@ public abstract sealed class Concepto implements Cotizable, Serializable
         @Override
         protected double calcularTarifa(int unidades) {
             // TODO E05: Mano de obra: 10 % adicional por nivel técnico. Fórmula: precioBase() * unidades * (1 + 0.10 * nivelTecnico)
-            throw new UnsupportedOperationException("TODO E05");
+            //Calcular el precio adicional por el nivel técnico
+            return precioBase() * unidades * (1 + 0.10 * nivelTecnico);
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         /** Retorno covariante: devuelve ManoDeObra, no Concepto. */
         @Override
         public ManoDeObra copiar() {
             // TODO E05: Crear un nuevo ManoDeObra con el mismo nombre, precio y atributo (clave nueva).
-            throw new UnsupportedOperationException("TODO E05");
+            return new ManoDeObra(nombre(), precioBase(), nivelTecnico);
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         @Override
@@ -259,7 +298,13 @@ public abstract sealed class Concepto implements Cotizable, Serializable
 
         private static String validar(String equipo) {
             // TODO E05: Validar: equipo != null && !equipo.isBlank() (si no se cumple: ReglaNegocioException "El equipo de diagnóstico es obligatorio").
-            throw new UnsupportedOperationException("TODO E05");
+            // Validar que el equipo sea obligatorio
+            if (equipo == null || equipo.isBlank()){
+                throw new ReglaNegocioException("El equipo de diagnóstico es obligatorio");
+            }
+            //throw new UnsupportedOperationException("TODO E05");
+            //devolver el equipo si es valido
+            return equipo;
         }
 
         public String equipo() {
@@ -269,14 +314,16 @@ public abstract sealed class Concepto implements Cotizable, Serializable
         @Override
         protected double calcularTarifa(int unidades) {
             // TODO E05: Diagnóstico: revisiones subsecuentes al 50 %. Fórmula: unidades == 1 ? precioBase() : precioBase() + (unidades - 1) * precioBase() * 0.5
-            throw new UnsupportedOperationException("TODO E05");
+            return unidades == 1 ? precioBase() : precioBase() + (unidades - 1) * precioBase() * 0.5;
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         /** Retorno covariante: devuelve Diagnostico, no Concepto. */
         @Override
         public Diagnostico copiar() {
             // TODO E05: Crear un nuevo Diagnostico con el mismo nombre, precio y atributo (clave nueva).
-            throw new UnsupportedOperationException("TODO E05");
+            return new Diagnostico(nombre(), precioBase(), equipo());
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         @Override
@@ -293,7 +340,10 @@ public abstract sealed class Concepto implements Cotizable, Serializable
         @Override
         public String descripcionCorta() {
             // TODO E05: Combinar ConGarantia.super.descripcionCorta() y Certificable.super.descripcionCorta() separados por " | ".
-            throw new UnsupportedOperationException("TODO E05");
+            return ConGarantia.super.descripcionCorta() + " | "
+            //Ejecuta la implementacion de default de cdrtificable
+            + Certificable.super.descripcionCorta();
+            //throw new UnsupportedOperationException("TODO E05");
         }
 
         @Override

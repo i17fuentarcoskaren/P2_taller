@@ -32,8 +32,7 @@ public interface Cotizable {
 
     /** Método estático de interfaz: comparador por nombre (referencia a método de objeto arbitrario). */
     static Comparator<Cotizable> porNombre() {
-        return Comparator.comparing(
-                Cotizable::nombre, String.CASE_INSENSITIVE_ORDER);
+        return Comparator.comparing(Cotizable::nombre, String.CASE_INSENSITIVE_ORDER);
         // TODO E02: Usar Comparator.comparing(Cotizable::nombre, String.CASE_INSENSITIVE_ORDER).
         //throw new UnsupportedOperationException("TODO E02");
     }

@@ -12,6 +12,7 @@ public interface Certificable {
 
     default String descripcionCorta() {
         // TODO E05: Devolver "Norma: " concatenado con el valor de norma().
-        throw new UnsupportedOperationException("TODO E05");
+        return "Norma: " + norma();
+        //throw new UnsupportedOperationException("TODO E05");
     }
 }

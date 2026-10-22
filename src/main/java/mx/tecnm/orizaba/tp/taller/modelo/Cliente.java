@@ -4,6 +4,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -27,7 +28,14 @@ public class Cliente implements Externalizable {
 
     public Cliente(int id, String nombre, String correo, Nivel nivel) {
         // TODO E06: Validar id > 0 y asignar nombre, correo y nivel mediante sus setters.
-        throw new UnsupportedOperationException("TODO E06");
+        if (id <=0){
+            throw new ReglaNegocioException("El ID debe de ser mayor a 0");
+        }
+        this.id = id;
+        setNombre(nombre);
+        setCorreo(correo);
+        setNivel(nivel);
+        //throw new UnsupportedOperationException("TODO E06");
     }
 
     /** Encadenamiento de constructores: nivel por omisión. */
@@ -53,12 +61,20 @@ public class Cliente implements Externalizable {
 
     public final void setNombre(String nombre) {
         // TODO E06: Rechazar nombre nulo o en blanco.
-        throw new UnsupportedOperationException("TODO E06");
+        if (nombre == null || nombre.isBlank()){
+            throw new ReglaNegocioException("El nombre no puede estar vacío");
+        }
+        this.nombre = nombre.strip();
+        //throw new UnsupportedOperationException("TODO E06");
     }
 
     public final void setCorreo(String correo) {
         // TODO E06: Validar el correo con el patrón CORREO y guardarlo en minúsculas.
-        throw new UnsupportedOperationException("TODO E06");
+        if (correo == null || !CORREO.matcher(correo).matches()){
+            throw new ReglaNegocioException("El correo electrónico no es valido");
+        }
+        this.correo = correo.toLowerCase();
+        //throw new UnsupportedOperationException("TODO E06");
     }
 
     public final void setNivel(Nivel nivel) {
@@ -68,6 +84,15 @@ public class Cliente implements Externalizable {
     @Override
     public void writeExternal(ObjectOutput salida) throws IOException {
         // TODO E14: Escribir id, nombre, correo y el nombre del nivel (writeInt / writeUTF).
+        //escribir id
+        //salida.writeInt(id);
+        //escribir nombre
+        //salida.writeUTF(nombre);
+        //escribir correo
+       // salida.writeUTF(correo);
+        //escribir el nombre de la constante
+        //salida.writeUTF(nivel.name());
+
         throw new UnsupportedOperationException("TODO E14");
     }
 
