@@ -341,7 +341,7 @@ public abstract sealed class Concepto implements Cotizable, Serializable
         public String descripcionCorta() {
             // TODO E05: Combinar ConGarantia.super.descripcionCorta() y Certificable.super.descripcionCorta() separados por " | ".
             return ConGarantia.super.descripcionCorta() + " | "
-            //Ejecuta la implementacion de default de cdrtificable
+            //Ejecuta la implementacion de default de certificable
             + Certificable.super.descripcionCorta();
             //throw new UnsupportedOperationException("TODO E05");
         }

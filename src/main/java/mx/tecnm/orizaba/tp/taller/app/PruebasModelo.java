@@ -28,14 +28,22 @@ import java.util.concurrent.atomic.AtomicReference;
  * antes de comenzar la UI. Ejecutar: {@code java ... mx.tecnm.orizaba.tp.taller.app.PruebasModelo}
  */
 public final class PruebasModelo {
-
+    /** Contador de pruebas aprobadas exitosamente. */
     private static int aprobadas;
+    /** Lista que almacena los nombres de las pruebas que han fallado. */
     private static final List<String> fallidas = new ArrayList<>();
 
     @FunctionalInterface
     private interface Caso {
         void ejecutar() throws Exception;
     }
+
+    /**
+     * Ejecuta un caso de prueba individual, registrando si se aprueba o si falla.
+     *
+     * @param nombre Descripción o identificador de la prueba.
+     * @param caso   Bloque de código ejecutable de la prueba.
+     */
 
     private static void prueba(String nombre, Caso caso) {
         try {
@@ -48,15 +56,35 @@ public final class PruebasModelo {
         }
     }
 
+    /**
+     * Verifica que una condición booleana sea verdadera; de lo contrario, lanza un error de aserción.
+     *
+     * @param condicion Condición a evaluar.
+     * @param mensaje   Mensaje descriptivo en caso de fallo.
+     */
+
     private static void verificar(boolean condicion, String mensaje) {
         if (!condicion) {
             throw new AssertionError(mensaje);
         }
     }
+    /**
+     * Verifica que dos valores numéricos decimales estén cercanamente próximos (con tolerancia menor a 0.01).
+     *
+     * @param esperado Valor numérico esperado.
+     * @param real     Valor numérico obtenido en la ejecución.
+     */
 
     private static void cerca(double esperado, double real) {
         verificar(Math.abs(esperado - real) < 0.01, "se esperaba " + esperado + " y se obtuvo " + real);
     }
+
+    /**
+     * Verifica que la ejecución de un caso de prueba lance una excepción del tipo esperado.
+     *
+     * @param tipo  Clase de la excepción esperada.
+     * @param caso  Bloque de código que debe lanzar la excepción.
+     */
 
     private static void lanza(Class<? extends Throwable> tipo, Caso caso) {
         try {
@@ -67,11 +95,18 @@ public final class PruebasModelo {
         }
         throw new AssertionError("se esperaba " + tipo.getSimpleName());
     }
+    /**
+     * Método principal (punto de entrada) que ejecuta la suite completa de pruebas de aceptación (T01 a T14).
+     *
+     * @param args Argumentos de la línea de comandos.
+     * @throws Exception Si ocurre un error crítico de I/O o configuración durante la ejecución.
+     */
 
     public static void main(String[] args) throws Exception {
         Path tmp = Files.createTempDirectory("pruebas-taller");
         System.out.println("Pruebas del modelo – Taller");
 
+        //Validación de formato, parseo y restricciones de Folio
         prueba("T01 Folio: formato, parse y validación", () -> {
             Folio c = Folio.parse("ABC-0042");
             verificar(c.toString().equals("ABC-0042"), "toString");
@@ -79,14 +114,14 @@ public final class PruebasModelo {
             lanza(IllegalArgumentException.class, () -> new Folio("ab", 1));
             lanza(IllegalArgumentException.class, () -> Folio.parse("ABC_1"));
         });
-
+        //Pruebas de invariantes y encapsulamiento en Conceptos
         prueba("T02 Invariantes de Concepto (encapsulamiento)", () -> {
             lanza(ReglaNegocioException.class, () -> new Concepto.Refaccion("x", -1, "Bosch"));
             lanza(ReglaNegocioException.class, () -> new Concepto.Refaccion(" ", 10, "Bosch"));
             lanza(ReglaNegocioException.class, () -> new Concepto.ManoDeObra("x", 10, 4));
             lanza(ReglaNegocioException.class, () -> new Concepto.Refaccion("x", 10, "Bosch").tarifa(0));
         });
-
+        //Comprobación de polimorfismo y cálculo de tarifas por subtipo
         prueba("T03 Polimorfismo: tarifas por subtipo (Template Method)", () -> {
             Cotizable[] v = {
                 new Concepto.Refaccion("a", 450.0, "Bosch"),
@@ -97,6 +132,8 @@ public final class PruebasModelo {
             cerca(1000.0, v[2].tarifa(3));
             cerca(Math.round(900.0 * 1.16 * 100.0) / 100.0, v[0].tarifaConImpuesto(2));
         });
+
+        //Clasificación múltiple de interfaces y resolución de métodos default
 
         prueba("T04 Clasificación múltiple y colisión de métodos default", () -> {
             Object s1 = new Concepto.Refaccion("a", 1, "Bosch");
@@ -109,12 +146,14 @@ public final class PruebasModelo {
             verificar(d.contains("Garantía (meses)") && d.contains("Norma"), "colisión resuelta: " + d);
         });
 
+        //Verificación de retorno covariante en el método copiar()
         prueba("T05 Retorno covariante en copiar()", () -> {
             Concepto.Refaccion a = new Concepto.Refaccion("a", 5, "Bosch");
             Concepto.Refaccion b = a.copiar();   // sin conversión: retorno covariante
             verificar(!a.equals(b) && a.nombre().equals(b.nombre()), "copia con clave nueva");
         });
 
+        //Comprobación de la máquina de estados en OrdenServicio
         prueba("T06 Máquina de estados de OrdenServicio", () -> {
             Cliente x = new Cliente(900, "Prueba", "prueba@ito.mx");
             OrdenServicio t = new OrdenServicio(900, x, LocalDate.now());

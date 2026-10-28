@@ -81,7 +81,7 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
 
     /** Agrega una línea; sólo es posible mientras está ABIERTA y sin repetir concepto. */
     public synchronized Linea agregar(Concepto elemento, int unidades) {
-        // TODO E07: Exigir estado ABIERTA, rechazar elementos repetidos (stream anyMatch), crear la Linea interna y añadirla.
+        //TODO E07: Exigir estado ABIERTA, rechazar elementos repetidos (stream anyMatch), crear la Linea interna y añadirla.
         if (estado != Estado.ABIERTA){
             throw new ReglaNegocioException("La orden debe de estar abierta para agregar elementos");
         }

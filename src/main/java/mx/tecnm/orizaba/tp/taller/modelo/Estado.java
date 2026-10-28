@@ -20,7 +20,12 @@ public enum Estado {
     /** Indica si la transición hacia {@code destino} es válida (switch como expresión). */
     public boolean permiteTransicionA(Estado destino) {
         // TODO E07: Implementar con switch-expresión las transiciones del diagrama; los estados terminales no permiten ninguna.
-        throw new UnsupportedOperationException("TODO E07");
+        return switch (this){
+            case ABIERTA -> destino==Estado.EN_CURSO || destino == Estado.CANCELADA;
+            case EN_CURSO -> destino == Estado.CERRADA || destino == Estado.CANCELADA;
+            case CERRADA, CANCELADA -> false;
+        };
+        //throw new UnsupportedOperationException("TODO E07");
     }
 
     public boolean esTerminal() {

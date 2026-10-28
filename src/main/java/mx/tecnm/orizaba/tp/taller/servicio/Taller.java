@@ -42,16 +42,10 @@ import java.util.stream.Stream;
 /**
  * Fachada del dominio (capa de servicio). <strong>La UI sólo debe depender de esta clase</strong>
  * y de los tipos del paquete {@code modelo}/{@code eventos}; nunca de JDBC.
- * <ul>
- *   <li>Concurrencia: {@link MonitorAvance} es una clase interna que <em>es una</em>
- *       {@link TareaPeriodica} y <em>tiene acceso</em> a {@code Taller.this}: herencia múltiple de
- *       implementación mediante clases internas (véase {@code J04_Multiple_De_Implementacion}).</li>
- *   <li>Programación funcional: reportes con streams y funciones de orden superior.</li>
- * </ul>
  */
 public class Taller implements AutoCloseable {
 
-    /** Días tras los cuales un(a) orden de servicio en curso genera una alerta. */
+    /** Días tras los cuales una orden en curso genera una alerta. */
     public static final int PLAZO_DIAS = 5;
 
     private final CatalogoConceptos catalogo = new CatalogoConceptos();
@@ -72,13 +66,17 @@ public class Taller implements AutoCloseable {
 
     /** @param reloj proveedor de la fecha actual (inyectable para pruebas y simulación) */
     public Taller(ConexionSQLite bd, Supplier<LocalDate> reloj) {
-        // TODO E15: Crear los tres repositorios SQLite, asignar el reloj y cargar los datos existentes en memoria.
-        throw new UnsupportedOperationException("TODO E15");
+        this.repoElementos = new RepositorioConceptoSQLite(bd);
+        this.repoClientes = new RepositorioClienteSQLite(bd);
+        this.repoRegistros = new RepositorioOrdenServicioSQLite(bd, repoClientes, repoElementos);
+        this.reloj = reloj;
+        cargar();
     }
 
     private void cargar() {
-        // TODO E15: Usar referencias a método: repoElementos.todos().forEach(catalogo::agregar), etc.
-        throw new UnsupportedOperationException("TODO E15");
+        repoElementos.todos().forEach(catalogo::agregar);
+        repoClientes.todos().forEach(cliente -> clientes.put(cliente.id(), cliente));
+        repoRegistros.todos().forEach(orden -> registros.put(orden.id(), orden));
     }
 
     // ------------------------------------------------------------------ eventos
@@ -98,13 +96,12 @@ public class Taller implements AutoCloseable {
 
     // ------------------------------------------------------------------ catálogo
 
-    /**
-     * Alta genérica de cualquier subtipo mediante una fábrica (función de orden superior).
-     * Ejemplo: {@code registrar(Concepto.Refaccion::new, "...", 100.0, "Bosch")}.
-     */
     public <E extends Concepto, A> E registrar(FabricaElemento<E, A> fabrica, String nombre, double precio, A atributo) {
-        // TODO E15: Crear con la fábrica, persistir, agregar al catálogo, publicar ALTA y devolver el elemento.
-        throw new UnsupportedOperationException("TODO E15");
+        E elemento = fabrica.crear(nombre, precio, atributo);
+        repoElementos.guardar(elemento);
+        catalogo.agregar(elemento);
+        publicar(TipoEvento.ALTA, "Concepto registrado: " + elemento.clave());
+        return elemento;
     }
 
     public void actualizar(Concepto elemento, String nombre, double precio) {
@@ -114,8 +111,19 @@ public class Taller implements AutoCloseable {
     }
 
     public boolean retirar(Folio clave) {
-        // TODO E15: Impedir retirar elementos referenciados por algún registro; eliminar de la BD y del catálogo.
-        throw new UnsupportedOperationException("TODO E15");
+        boolean referenciado = registros.values().stream()
+                .anyMatch(orden -> orden.lineas().stream()
+                        .anyMatch(lineas -> lineas.elemento().clave().equals(clave)));
+
+        if (referenciado) {
+            throw new ReglaNegocioException("No se puede retirar un concepto asociado a una orden");
+        }
+        boolean eliminado = repoElementos.eliminar(clave);
+
+        if (eliminado) {
+            catalogo.retirar(clave);
+        }
+        return eliminado;
     }
 
     public CatalogoConceptos catalogo() {
@@ -130,8 +138,17 @@ public class Taller implements AutoCloseable {
     // ------------------------------------------------------------------ clientes
 
     public Cliente registrarCliente(String nombre, String correo, Nivel nivel) {
-        // TODO E15: Rechazar correos repetidos; id = máximo actual + 1 (stream mapToInt/max); persistir y publicar ALTA.
-        throw new UnsupportedOperationException("TODO E15");
+        boolean repetido = clientes.values().stream()
+                .anyMatch(cliente -> cliente.correo().equalsIgnoreCase(correo));
+        if (repetido) {
+            throw new ReglaNegocioException("El correo ya está registrado");
+        }
+        int id = clientes.values().stream().mapToInt(Cliente::id).max().orElse(0) + 1;
+        Cliente nuevo = new Cliente(id, nombre, correo, nivel);
+        repoClientes.guardar(nuevo);
+        clientes.put(nuevo.id(), nuevo);
+        publicar(TipoEvento.ALTA, "Cliente registrado: " + nuevo.id());
+        return nuevo;
     }
 
     public void cambiarNivel(int idCliente, Nivel nivel) {
@@ -150,15 +167,89 @@ public class Taller implements AutoCloseable {
     }
 
     // ------------------------------------------------------------------ órdenes de servicio
+    /**
+     * Actualiza los datos de un cliente registrado.
+     *
+     * @param id identificador del cliente
+     * @param nombre nuevo nombre
+     * @param correo nuevo correo electrónico
+     * @param nivel nuevo nivel del cliente
+     */
+    public void actualizarCliente(int id, String nombre,
+                                  String correo, Nivel nivel) {
 
+        Cliente actual = cliente(id);
+
+        String limpio = correo == null ? null : correo.strip();
+
+        boolean repetido = clientes.values().stream()
+                .anyMatch(c -> c.id() != id
+                        && c.correo().equalsIgnoreCase(limpio));
+
+        if (repetido) {
+            throw new ReglaNegocioException(
+                    "El correo ya está registrado por otro cliente"
+            );
+        }
+
+        Cliente editado = new Cliente(id, nombre, limpio, nivel);
+
+        // Guardar primero en SQLite
+        repoClientes.guardar(editado);
+
+        // Actualizar el objeto existente en memoria
+        actual.setNombre(editado.nombre());
+        actual.setCorreo(editado.correo());
+        actual.setNivel(editado.nivel());
+    }
+
+    /**
+     * Elimina un cliente si no tiene órdenes asociadas.
+     *
+     * @param id identificador del cliente
+     * @return true si fue eliminado correctamente
+     */
+    public boolean eliminarCliente(int id) {
+
+        // Verificar que el cliente exista
+        cliente(id);
+
+        // Comprobar si tiene órdenes relacionadas
+        boolean tieneOrdenes = registros.values().stream()
+                .anyMatch(o -> o.cliente().id() == id);
+
+        if (tieneOrdenes) {
+            throw new ReglaNegocioException(
+                    "No se puede eliminar un cliente que tiene órdenes de servicio"
+            );
+        }
+
+        // Eliminar de SQLite
+        boolean eliminado = repoClientes.eliminar(id);
+
+        // Eliminar de memoria
+        if (eliminado) {
+            clientes.remove(id);
+        }
+
+        return eliminado;
+    }
     public OrdenServicio abrir(int idCliente) {
-        // TODO E15: Crear el registro con la fecha del reloj, persistir, guardar en el mapa y publicar CAMBIO_ESTADO.
-        throw new UnsupportedOperationException("TODO E15");
+        Cliente cliente = cliente(idCliente);
+        int id = registros.values().stream().mapToInt(OrdenServicio::id).max().orElse(0) + 1;
+        OrdenServicio nueva = new OrdenServicio(id, cliente, reloj.get());
+        repoRegistros.guardar(nueva);
+        registros.put(nueva.id(), nueva);
+        publicar(TipoEvento.CAMBIO_ESTADO, "Orden #" + nueva.id() + " abierta");
+        return nueva;
     }
 
     public OrdenServicio.Linea agregarLinea(int idOrdenServicio, String clave, int unidades) {
-        // TODO E15: Localizar registro y elemento, agregar la línea y persistir.
-        throw new UnsupportedOperationException("TODO E15");
+        OrdenServicio orden = registro(idOrdenServicio);
+        Concepto concepto = elemento(clave);
+        OrdenServicio.Linea linea = orden.agregar(concepto, unidades);
+        repoRegistros.guardar(orden);
+        return linea;
     }
 
     public boolean quitarLinea(int idOrdenServicio, String clave) {
@@ -180,10 +271,11 @@ public class Taller implements AutoCloseable {
         transitar(idOrdenServicio, OrdenServicio::cancelar);
     }
 
-    /** Orden superior: la transición concreta llega como {@link Consumer} (referencia a método). */
     private void transitar(int id, Consumer<OrdenServicio> transicion) {
-        // TODO E15: Aplicar la transición, persistir y publicar CAMBIO_ESTADO.
-        throw new UnsupportedOperationException("TODO E15");
+        OrdenServicio orden = registro(id);
+        transicion.accept(orden);
+        repoRegistros.guardar(orden);
+        publicar(TipoEvento.CAMBIO_ESTADO, "Orden #" + orden.id() + " cambió a " + orden.estado());
     }
 
     public OrdenServicio registro(int id) {
@@ -205,32 +297,43 @@ public class Taller implements AutoCloseable {
         return registros.values().stream().filter(t -> t.estado() == Estado.CERRADA);
     }
 
-    /** Ingresos por subtipo (sólo registros cerrados). */
     public Map<String, Double> ingresosPorTipo() {
-        // TODO E16: flatMap de líneas; groupingBy(tipo, TreeMap::new, summingDouble(importe)).
-        throw new UnsupportedOperationException("TODO E16");
+        return cerrados().flatMap(v -> v.lineas().stream()).collect(Collectors.groupingBy(
+                linea -> linea.elemento().tipo(),
+                TreeMap::new,
+                Collectors.summingDouble(OrdenServicio.Linea::importe)
+        ));
     }
 
-    /** El concepto con más unidades en registros cerrados. */
     public Optional<Concepto> masDemandado() {
-        // TODO E16: groupingBy(elemento, summingInt(unidades)) y máximo por valor con Map.Entry.comparingByValue().
-        throw new UnsupportedOperationException("TODO E16");
+        Map<Concepto, Integer> unidadesPorConcepto = cerrados().flatMap(v -> v.lineas().stream()).collect(Collectors.groupingBy(
+                OrdenServicio.Linea::elemento,
+                Collectors.summingInt(OrdenServicio.Linea::unidades)
+        ));
+        return unidadesPorConcepto.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey);
     }
 
-    /** Los {@code n} clientes con mayor importe acumulado. */
     public List<Cliente> mejores(int n) {
-        // TODO E16: groupingBy(actor, summingDouble(total)); ordenar descendentemente por valor; limit(n).
-        throw new UnsupportedOperationException("TODO E16");
+        Map<Cliente, Double> totales = cerrados().collect(Collectors.groupingBy(
+                OrdenServicio::cliente,
+                Collectors.summingDouble(OrdenServicio::total)
+        ));
+        return totales.entrySet().stream()
+                .sorted(Map.Entry.<Cliente, Double>comparingByValue().reversed())
+                .limit(n)
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     public DoubleSummaryStatistics estadisticas() {
-        // TODO E16: mapToDouble(OrdenServicio::total).summaryStatistics() sobre los cerrados.
-        throw new UnsupportedOperationException("TODO E16");
+        return cerrados().mapToDouble(OrdenServicio::total).summaryStatistics();
     }
 
     public Map<Boolean, List<Concepto>> particionarPorPrecio(double umbral) {
-        // TODO E16: partitioningBy(e -> e.precioBase() >= umbral).
-        throw new UnsupportedOperationException("TODO E16");
+        return catalogo.ordenados(Comparator.comparing(Concepto::clave)).stream()
+                .collect(Collectors.partitioningBy(e -> e.precioBase() >= umbral));
     }
 
     public Map<Estado, Long> conteoPorEstado() {
@@ -242,35 +345,60 @@ public class Taller implements AutoCloseable {
         return catalogo.filtrar(regla);
     }
 
-    /** Proyección genérica (orden superior). */
     public <R> List<R> proyectar(Function<? super Concepto, ? extends R> funcion) {
-        // TODO E16: Recorrer el catálogo ordenado por clave y aplicar map(funcion).
-        throw new UnsupportedOperationException("TODO E16");
+        return catalogo.ordenados(Comparator.comparing(Concepto::clave)).stream()
+                .<R>map(funcion)
+                .toList();
     }
 
-    /** Descripción con <em>pattern matching</em> exhaustivo sobre la jerarquía sellada (sin default). */
     public String describir(Concepto e) {
-        // TODO E16: switch (e) con un caso por subtipo y al menos un caso con guarda "when".
-        throw new UnsupportedOperationException("TODO E16");
+        return switch (e) {
+            case Concepto.Refaccion r -> String.format("Refaccion %s de marca %s", r.nombre(), r.marca());
+            case Concepto.ManoDeObra m when m.nivelTecnico() == 3 -> String.format("Mano de obra experta (Nivel 3): %s", m.nombre());
+            case Concepto.ManoDeObra m -> String.format("Mano de obra (Nivel %d): %s", m.nivelTecnico(), m.nombre());
+            case Concepto.Diagnostico d -> String.format("Diagnostico para %s: %s", d.equipo(), d.nombre());
+        };
     }
 
     // ------------------------------------------------------------------ monitor
 
-    /**
-     * Un ciclo de revisión (síncrono y probado de forma determinista):
-     * cancela registros ABIERTOS sin líneas con al menos un día de antigüedad y emite una
-     * ALERTA (una sola vez) por cada registro EN_CURSO con más de {@link #PLAZO_DIAS} días.
-     *
-     * @return número de acciones realizadas
-     */
     public synchronized int revisar() {
-        // TODO E12: Recorrer los registros y aplicar las dos reglas con un switch sobre el estado.
-        throw new UnsupportedOperationException("TODO E12");
+        int acciones = 0;
+        LocalDate hoy = reloj.get();
+        for (OrdenServicio orden : registros.values()) {
+            long dias = orden.diasDesde(hoy);
+            switch (orden.estado()) {
+                case ABIERTA -> {
+                    if (orden.lineas().isEmpty() && dias >= 1) {
+                        orden.cancelar();
+                        repoRegistros.guardar(orden);
+                        publicar(
+                                TipoEvento.CANCELACION_AUTOMATICA,
+                                "Orden #" + orden.id() + " cancelada"
+                        );
+                        acciones++;
+                    }
+                }
+                case EN_CURSO -> {
+                    if (dias > PLAZO_DIAS && alertados.add(orden.id())) {
+                        publicar(TipoEvento.ALERTA, "Orden #" + orden.id() + " vencida");
+                        acciones++;
+                    }
+                }
+                case CERRADA, CANCELADA -> {}
+            }
+        }
+        return acciones;
+        //throw new UnsupportedOperationException("TODO E12")
     }
 
     public synchronized void iniciarMonitor(long periodoMs) {
-        // TODO E12: Crear el monitor interno (new MonitorAvance(periodoMs)) e iniciarlo con un nombre de hilo descriptivo.
-        throw new UnsupportedOperationException("TODO E12");
+        if (monitor != null && monitor.activa()) {
+            throw new IllegalStateException("El monitor ya está activo");
+        }
+
+        monitor = new MonitorAvance(periodoMs);
+        monitor.iniciar("Hilo-Monitor-Taller");
     }
 
     public void detenerMonitor() throws InterruptedException {
@@ -287,9 +415,6 @@ public class Taller implements AutoCloseable {
         return monitor != null && monitor.activa();
     }
 
-    /**
-     * Clase interna: ES UNA {@link TareaPeriodica} y TIENE ACCESO a la envolvente.
-     */
     public final class MonitorAvance extends TareaPeriodica {
 
         private MonitorAvance(long periodoMs) {
@@ -298,8 +423,7 @@ public class Taller implements AutoCloseable {
 
         @Override
         protected void ejecutarCiclo() {
-            // TODO E12: Delegar en la envolvente: Taller.this.revisar().
-            throw new UnsupportedOperationException("TODO E12");
+            Taller.this.revisar();
         }
     }
 
@@ -309,7 +433,6 @@ public class Taller implements AutoCloseable {
         Respaldo.exportar(archivo, catalogo, clientes(), registros());
     }
 
-    /** Detiene el monitor (si está activo). Invocar al cerrar la aplicación. */
     @Override
     public void close() {
         try {

@@ -16,17 +16,22 @@ public interface Regla<T> {
 
     default Regla<T> y(Regla<? super T> otra) {
         // TODO E11: Devolver la lambda t -> evaluar(t) && otra.evaluar(t) (validar otra no nula).
-        throw new UnsupportedOperationException("TODO E11");
+        Objects.requireNonNull(otra, "La otra regla no puede ser nula");
+        return t -> evaluar(t) && otra.evaluar(t);
+        //throw new UnsupportedOperationException("TODO E11");
     }
 
     default Regla<T> o(Regla<? super T> otra) {
         // TODO E11: Devolver la lambda t -> evaluar(t) || otra.evaluar(t).
-        throw new UnsupportedOperationException("TODO E11");
+        Objects.requireNonNull(otra, "La otra regla no puede ser nula");
+        return t->evaluar(t) || otra.evaluar(t);
+        //throw new UnsupportedOperationException("TODO E11");
     }
 
     default Regla<T> negar() {
         // TODO E11: Devolver la lambda t -> !evaluar(t).
-        throw new UnsupportedOperationException("TODO E11");
+            return t->!evaluar(t);
+        //throw new UnsupportedOperationException("TODO E11");
     }
 
     /** Adaptador hacia {@link Predicate} mediante referencia a método de instancia particular. */

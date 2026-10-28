@@ -1,0 +1,61 @@
+-J-Duser.language=
+-J-Duser.country=
+@options
+@packages
+-classpath
+'C:/Users/karen/.m2/repository/org/xerial/sqlite-jdbc/3.46.1.3/sqlite-jdbc-3.46.1.3.jar;C:/Users/karen/.m2/repository/com/formdev/flatlaf/3.4.1/flatlaf-3.4.1.jar'
+-encoding
+'UTF-8'
+-protected
+--release
+21
+-sourcepath
+'C:/Users/karen/OneDrive/Escritorio/MAESTRIA/PRIMER SEMESTRE MAESTRIA/TEC. DE PROGRAMAMACIÓN/PROYECTO/TP_esqueletos_estudiantes/P2_taller/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/Users/karen/OneDrive/Escritorio/MAESTRIA/PRIMER SEMESTRE MAESTRIA/TEC. DE PROGRAMAMACIÓN/PROYECTO/TP_esqueletos_estudiantes/P2_taller/target/reports/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Miniproyecto 2 - Gestión de Órdenes de Servicio de un Taller Mecánico 1.0.0 API'
+-use
+-version
+-windowtitle
+'Miniproyecto 2 - Gestión de Órdenes de Servicio de un Taller Mecánico 1.0.0 API'
+mx.tecnm.orizaba.tp.taller.app
+mx.tecnm.orizaba.tp.taller.concurrencia
+mx.tecnm.orizaba.tp.taller.eventos
+mx.tecnm.orizaba.tp.taller.funcional
+mx.tecnm.orizaba.tp.taller.modelo
+mx.tecnm.orizaba.tp.taller.persistencia
+mx.tecnm.orizaba.tp.taller.servicio
+mx.tecnm.orizaba.tp.taller.ui
+C:\Users\karen\.m2\repository\org\xerial\sqlite-jdbc\3.46.1.3\sqlite-jdbc-3.46.1.3.jar = 1791229952169
+C:\Users\karen\.m2\repository\com\formdev\flatlaf\3.4.1\flatlaf-3.4.1.jar = 1793129301913
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\src\main\java = 1791227944880
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\allclasses-index.html = 1793133232889
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\allpackages-index.html = 1793133232893
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\constant-values.html = 1793133232507
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\copy.svg = 1793133232965
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\element-list = 1793133232357
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\help-doc.html = 1793133232957
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\index-all.html = 1793133232945
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\index.html = 1793133232843
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\link.svg = 1793133232976
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\member-search-index.js = 1793133232904
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\module-search-index.js = 1793133232894
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\overview-summary.html = 1793133232952
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\overview-tree.html = 1793133232837
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\package-search-index.js = 1793133232896
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\script.js = 1793133232962
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\search-page.js = 1793133232982
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\search.html = 1793133232948
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\search.js = 1793133232980
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\serialized-form.html = 1793133232538
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\stylesheet.css = 1793133232960
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\tag-search-index.js = 1793133232907
+C:\Users\karen\OneDrive\Escritorio\MAESTRIA\PRIMER SEMESTRE MAESTRIA\TEC. DE PROGRAMAMACIÓN\PROYECTO\TP_esqueletos_estudiantes\P2_taller\target\reports\apidocs\type-search-index.js = 1793133232899

@@ -13,18 +13,38 @@ import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * Clase de demostración y recorrido de consola por el modelo de negocio.
+ *
+ * <p>Sirve como una referencia de uso fundamental para comprender la interacción
+ * con el servicio del taller y orientar la construcción de la interfaz gráfica (UI).
+ * La implementación de la interfaz debe cubrir, como mínimo, las operaciones
+ * aquí demostradas:</p>
+ * <ul>
+ *   <li>Suscripción a eventos del sistema en tiempo real.</li>
+ *   <li>Alta de conceptos (refacciones, mano de obra y diagnósticos) mediante referencias a constructores.</li>
+ *   <li>Registro de clientes con diferentes niveles de servicio.</li>
+ *   <li>Flujo completo del ciclo de vida de las órdenes de servicio (apertura, adición de líneas, inicio y cierre).</li>
+ *   <li>Generación de reportes analíticos, estadísticas y consultas funcionales.</li>
+ *   <li>Simulación de un monitor en segundo plano con control temporal.</li>
+ * </ul>
+ */
+
+/**
  * Recorrido de consola por el modelo: sirve como referencia de uso para construir la UI.
  * La UI del estudiante debe ofrecer, como mínimo, lo que aquí se muestra.
  */
 public final class DemoModelo {
 
     public static void main(String[] args) throws Exception {
+        // Determinación de la ruta de la base de datos (argumento o archivo temporal)
         Path bd = args.length > 0 ? Path.of(args[0]) : Files.createTempFile("taller", ".db");
         AtomicReference<LocalDate> hoy = new AtomicReference<>(LocalDate.now());
 
         try (ConexionSQLite cx = new ConexionSQLite(bd.toString());
              Taller g = new Taller(cx, hoy::get)) {
 
+            // Suscripción al sistema de eventos mediante una clase anónima.
+            // En una aplicación de interfaz gráfica, aquí se utilizaría Platform.runLater o SwingUtilities.invokeLater.
             // Suscripción con clase anónima (la UI usaría Platform.runLater / invokeLater aquí).
             g.suscribir(new OyenteEvento() {
                 @Override

@@ -85,21 +85,31 @@ public class Cliente implements Externalizable {
     public void writeExternal(ObjectOutput salida) throws IOException {
         // TODO E14: Escribir id, nombre, correo y el nombre del nivel (writeInt / writeUTF).
         //escribir id
-        //salida.writeInt(id);
+        salida.writeInt(id);
         //escribir nombre
-        //salida.writeUTF(nombre);
+        salida.writeUTF(nombre);
         //escribir correo
-       // salida.writeUTF(correo);
+        salida.writeUTF(correo);
         //escribir el nombre de la constante
-        //salida.writeUTF(nivel.name());
-
-        throw new UnsupportedOperationException("TODO E14");
+        salida.writeUTF(nivel.name());
+        //throw new UnsupportedOperationException("TODO E14");
     }
 
     @Override
     public void readExternal(ObjectInput entrada) throws IOException {
         // TODO E14: Leer en el mismo orden en que se escribió y reconstruir el nivel con Nivel.valueOf.
-        throw new UnsupportedOperationException("TODO E14");
+        //leer el identificador num
+        this.id = entrada.readInt();
+
+        //leer el nombre
+        this.nombre = entrada.readUTF();
+
+        //leer el correo electronico
+        this.correo = entrada.readUTF();
+
+        //leer el nombre del nivel y reconvertirlo a la constante del enum usando valueOf
+        this.nivel = Nivel.valueOf(entrada.readUTF());
+        //throw new UnsupportedOperationException("TODO E14");
     }
 
     @Override
