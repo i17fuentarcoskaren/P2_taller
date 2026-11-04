@@ -7,8 +7,18 @@ package mx.tecnm.orizaba.tp.taller.modelo;
  * (véase {@code java_5_lambdas/a_interfaces_default/Default3}).
  */
 public interface ConGarantia {
-
+    /**
+     * Obtiene el número de meses de garantía asociados al elemento.
+     *
+     * @return Cantidad de meses de garantía.
+     */
     int mesesGarantia();
+
+    /**
+     * Proporciona una descripción corta predeterminada basada en los meses de garantía.
+     *
+     * @return Una cadena formateada que incluye el valor de los meses de garantía.
+     */
 
     default String descripcionCorta() {
         // TODO E05: Devolver "Garantía (meses): " concatenado con el valor de mesesGarantia().

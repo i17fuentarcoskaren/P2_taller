@@ -12,14 +12,27 @@ import java.util.Optional;
 
 /** Repositorio JDBC de clientes. */
 public class RepositorioClienteSQLite implements Repositorio<Cliente, Integer> {
-
+    /** Administrador de la conexión a la base de datos SQLite. */
     private final ConexionSQLite bd;
+    /** Mapeador funcional que convierte una fila de {@link ResultSet} en una instancia de {@link Cliente}. */
     private final MapeadorFila<Cliente> mapeador = rs -> new Cliente(rs.getInt("id"),
             rs.getString("nombre"), rs.getString("correo"), Nivel.valueOf(rs.getString("nivel")));
+    /**
+     * Construye un nuevo repositorio de clientes asociado a la conexión especificada.
+     *
+     * @param bd Instancia de {@link ConexionSQLite}.
+     */
 
     public RepositorioClienteSQLite(ConexionSQLite bd) {
         this.bd = bd;
     }
+
+    /**
+     * Guarda o actualiza un cliente en la base de datos utilizando la operación de inserción condicional (Upsert).
+     *
+     * @param a La entidad {@link Cliente} a guardar.
+     * @throws PersistenciaException si ocurre un error de SQL durante la operación.
+     */
 
     @Override
     public void guardar(Cliente a) {
@@ -73,6 +86,13 @@ public class RepositorioClienteSQLite implements Repositorio<Cliente, Integer> {
         //throw new UnsupportedOperationException("TODO E13");
     }
 
+    /**
+     * Obtiene una lista con todos los clientes registrados en la base de datos, ordenados por su identificador.
+     *
+     * @return Una lista de {@link Cliente}.
+     * @throws PersistenciaException si ocurre un error de SQL durante la consulta.
+     */
+
     @Override
     public List<Cliente> todos() {
         // TODO E13: SELECT ordenado por id.
@@ -95,6 +115,14 @@ public class RepositorioClienteSQLite implements Repositorio<Cliente, Integer> {
         }
         //throw new UnsupportedOperationException("TODO E13");
     }
+
+    /**
+     * Elimina un cliente de la base de datos basándose en su identificador único.
+     *
+     * @param id Identificador numérico del cliente a eliminar.
+     * @return {@code true} si se eliminó al menos un registro; {@code false} en caso contrario.
+     * @throws PersistenciaException si ocurre un error de SQL durante la eliminación.
+     */
 
     @Override
     public boolean eliminar(Integer id) {

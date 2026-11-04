@@ -15,12 +15,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public record Folio(String prefijo, int numero) implements Comparable<Folio>, Serializable {
 
+    /** Mapa concurrente que almacena las secuencias numéricas atómicas correspondientes a cada prefijo. */
     private static final Map<String, AtomicInteger> SECUENCIAS;
 
     static {
         // Inicialización estática: se ejecuta una sola vez, al primer uso activo de la clase.
         SECUENCIAS = new ConcurrentHashMap<>();
     }
+
+    /**
+     * Constructor compacto del record que valida las invariantes del folio:
+     * que el prefijo consista exactamente en tres letras mayúsculas y que el número sea positivo.
+     *
+     * @throws IllegalArgumentException si el prefijo o el número no cumplen con el formato válido.
+     */
 
     public Folio {
         // TODO E03: Validar que el prefijo tenga exactamente 3 letras mayúsculas y que el número sea positivo (IllegalArgumentException).

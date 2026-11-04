@@ -166,6 +166,7 @@ public final class PruebasModelo {
             verificar(t.estado() == Estado.CERRADA, "estado final");
         });
 
+        //Verificación de composición y herencia de nivel de cliente en líneas de orden
         prueba("T07 Composición: la línea usa el nivel de la envolvente", () -> {
             Nivel n = Nivel.values()[Nivel.values().length - 1];
             Cliente x = new Cliente(901, "Prueba", "p2@ito.mx", n);
@@ -175,6 +176,8 @@ public final class PruebasModelo {
             verificar(l.contenedor() == t, "OrdenServicio.this");
             lanza(ReglaNegocioException.class, () -> t.agregar(l.elemento(), 2));
         });
+
+        //Pruebas de agregación, iteradores ocultos, clases anónimas y locales
 
         prueba("T08 Agregación, iterador oculto, clase anónima y clase local", () -> {
             Concepto a = new Concepto.Refaccion("Alfa", 300, "Bosch");
@@ -188,6 +191,7 @@ public final class PruebasModelo {
             verificar(cat.resumen().startsWith("2 "), "clase local: " + cat.resumen());
             verificar(cat.deTipo(Concepto.Refaccion.class).size() == 1, "genéricos acotados");
         });
+        //Pruebas de interfaz funcional propia y composición de reglas
 
         prueba("T09 Interfaz funcional propia y composición de reglas", () -> {
             Concepto a = new Concepto.Refaccion("Alfa", 300, "Bosch");
@@ -200,6 +204,7 @@ public final class PruebasModelo {
             FabricaElemento<Concepto.Refaccion, String> f = Concepto.Refaccion::new;
             verificar(f.crear("Delta", 1, "Bosch").tipo().equals("Refaccion"), "referencia a constructor");
         });
+        //Validación de serialización con campos transient y Externalizable
 
         prueba("T10 Serialización: transient y Externalizable", () -> {
             Concepto a = new Concepto.Refaccion("Alfa", 10, "Bosch");
@@ -222,6 +227,7 @@ public final class PruebasModelo {
         AtomicReference<LocalDate> hoy = new AtomicReference<>(LocalDate.now());
         int[] ids = new int[2];
 
+        //Pruebas de integración del Servicio con SQLite (altas, flujos y reportes)
         prueba("T11 Servicio + SQLite: alta, flujo y reportes", () -> {
             try (ConexionSQLite cx = new ConexionSQLite(bd.toString())) {
                 Taller g = new Taller(cx, hoy::get);
@@ -249,6 +255,8 @@ public final class PruebasModelo {
             }
         });
 
+        //Validación de persistencia (la información sobrevive tras reiniciar la conexión)
+
         prueba("T12 Persistencia: la información sobrevive al reinicio", () -> {
             try (ConexionSQLite cx = new ConexionSQLite(bd.toString())) {
                 Taller g = new Taller(cx, hoy::get);
@@ -260,6 +268,7 @@ public final class PruebasModelo {
             }
         });
 
+        //Pruebas del monitor en segundo plano (reglas temporales, hilos y detención)
         prueba("T13 Monitor: reglas, hilo y detención", () -> {
             try (ConexionSQLite cx = new ConexionSQLite(bd.toString())) {
                 Taller g = new Taller(cx, hoy::get);
@@ -282,6 +291,8 @@ public final class PruebasModelo {
             }
         });
 
+        //Validación del respaldo binario (exportación e importación de datos)
+
         prueba("T14 Respaldo binario (exportar/importar)", () -> {
             Path archivo = tmp.resolve("respaldo.bin");
             try (ConexionSQLite cx = new ConexionSQLite(bd.toString())) {
@@ -295,6 +306,7 @@ public final class PruebasModelo {
             }
         });
 
+        //Impresión de resultados globales de la suite de pruebas
         System.out.printf("%nResultado: %d aprobadas, %d fallidas%n", aprobadas, fallidas.size());
         if (!fallidas.isEmpty()) {
             System.exit(1);

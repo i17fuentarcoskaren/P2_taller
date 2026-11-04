@@ -10,11 +10,18 @@ package mx.tecnm.orizaba.tp.taller.eventos;
 @FunctionalInterface
 public interface OyenteEvento {
 
+    /**
+     * Notifica la ocurrencia de un evento del dominio al observador.
+     *
+     * @param evento El objeto {@code Evento} que contiene los detalles de la notificación.
+     */
+
     void notificar(Evento evento);
 
     /** Composición secuencial de oyentes (función de orden superior). */
     default OyenteEvento luego(OyenteEvento siguiente) {
         // TODO E11: Devolver una lambda que notifique primero a this y después a siguiente.
+        // Devolver una lambda que notifique primero a this y después a siguiente.
         return evento -> {
             this.notificar(evento);
             siguiente.notificar(evento);

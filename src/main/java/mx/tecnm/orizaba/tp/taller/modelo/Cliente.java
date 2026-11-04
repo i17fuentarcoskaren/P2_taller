@@ -15,16 +15,31 @@ import java.util.regex.Pattern;
  */
 public class Cliente implements Externalizable {
 
-    private static final Pattern CORREO = Pattern.compile("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$");
+    /** Patrón de expresión regular para la validación del formato de correo electrónico. */
 
+    private static final Pattern CORREO = Pattern.compile("^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$");
+    /** Identificador único del cliente. */
     private int id;
+    /** Nombre o razón social del cliente. */
     private String nombre;
+    /** Correo electrónico de contacto del cliente. */
     private String correo;
+    /** Nivel de membresía o categoría del cliente. */
     private Nivel nivel;
 
     /** Requerido por la externalización: se invoca antes de readExternal. */
     public Cliente() {
     }
+
+    /**
+     * Construye un nuevo cliente con todos sus atributos especificados.
+     *
+     * @param id     Identificador único del cliente. Debe ser mayor a 0.
+     * @param nombre Nombre o razón social del cliente. No puede ser nulo ni en blanco.
+     * @param correo Correo electrónico de contacto. Debe cumplir con el patrón válido.
+     * @param nivel  Nivel de servicio asignado. No debe ser nulo.
+     * @throws ReglaNegocioException si el ID es menor o igual a 0, o si los datos no cumplen con las reglas de validación.
+     */
 
     public Cliente(int id, String nombre, String correo, Nivel nivel) {
         // TODO E06: Validar id > 0 y asignar nombre, correo y nivel mediante sus setters.
@@ -42,6 +57,12 @@ public class Cliente implements Externalizable {
     public Cliente(int id, String nombre, String correo) {
         this(id, nombre, correo, Nivel.values()[0]);
     }
+
+    /**
+     * Obtiene el identificador único del cliente.
+     *
+     * @return El ID numérico del cliente.
+     */
 
     public int id() {
         return id;

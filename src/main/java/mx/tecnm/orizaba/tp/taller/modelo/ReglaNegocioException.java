@@ -10,6 +10,12 @@ public class ReglaNegocioException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Construye una nueva excepción de regla de negocio con el mensaje descriptivo especificado.
+     *
+     * @param mensaje Detalle explicativo sobre la violación de la regla de negocio.
+     */
+
     public ReglaNegocioException(String mensaje) {
         super(mensaje);
     }

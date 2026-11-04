@@ -25,15 +25,20 @@ public abstract sealed class Concepto implements Cotizable, Serializable
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /** Contador atómico global de instancias de conceptos creadas en la aplicación. */
     private static final AtomicInteger INSTANCIAS_CREADAS;
 
     static {
         INSTANCIAS_CREADAS = new AtomicInteger();
     }
 
+    /** Folio único e immutable del concepto. */
     private final Folio clave;
+    /** Nombre descriptivo del concepto. */
     private String nombre;
+    /** Precio base unitario del concepto. */
     private double precioBase;
+    /** Fecha y hora en la que se creó el concepto. */
     private final LocalDateTime creadoEn;
     /** No se serializa: tras recuperar un respaldo vuelve a 0. */
     private transient int cotizaciones;

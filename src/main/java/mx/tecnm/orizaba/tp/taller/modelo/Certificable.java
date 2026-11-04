@@ -7,8 +7,18 @@ package mx.tecnm.orizaba.tp.taller.modelo;
  * (véase {@code java_5_lambdas/a_interfaces_default/Default3}).
  */
 public interface Certificable {
-
+    /**
+     * Obtiene el identificador o nombre de la norma de certificación correspondiente.
+     *
+     * @return Una cadena con la norma aplicable.
+     */
     String norma();
+
+    /**
+     * Proporciona una descripción corta predeterminada basada en la norma de certificación.
+     *
+     * @return Una cadena formateada que incluye el valor de la norma.
+     */
 
     default String descripcionCorta() {
         // TODO E05: Devolver "Norma: " concatenado con el valor de norma().

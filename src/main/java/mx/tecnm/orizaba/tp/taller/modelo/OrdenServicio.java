@@ -28,12 +28,18 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /** Secuencia atómica global para la generación consecutiva de identificadores de órdenes de servicio. */
     private static final AtomicInteger SECUENCIA = new AtomicInteger();
 
+    /** Identificador único de la orden de servicio. */
     private final int id;
+    /** Cliente asociado a la orden de servicio. */
     private final Cliente cliente;
+    /** Fecha en la que se emitió la orden de servicio. */
     private final LocalDate fecha;
+    /** Estado actual dentro del ciclo de vida de la orden. */
     private Estado estado;
+    /** Colección de líneas que componen los conceptos y unidades de la orden. */
     private final List<Linea> lineas = new ArrayList<>();
 
     {
@@ -223,11 +229,20 @@ public class OrdenServicio implements Iterable<OrdenServicio.Linea>, Serializabl
             return OrdenServicio.this.cliente.nivel().aplicar(subtotal());
             //throw new UnsupportedOperationException("TODO E08");
         }
-
+        /**
+         * Obtiene la orden de servicio contenedora (envolvente).
+         *
+         * @return Instancia de {@link OrdenServicio}.
+         */
         public OrdenServicio contenedor() {
             return OrdenServicio.this;
         }
 
+        /**
+         * Retorna la representación en cadena de la línea con su descripción, unidades e importe.
+         *
+         * @return Cadena formateada.
+         */
         @Override
         public String toString() {
             return String.format("%s x %d unidades = $%.2f", elemento.nombre(), unidades, importe());

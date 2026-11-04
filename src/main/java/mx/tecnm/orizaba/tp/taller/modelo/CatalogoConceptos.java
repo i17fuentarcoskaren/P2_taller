@@ -25,6 +25,8 @@ public class CatalogoConceptos implements Iterable<Concepto>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /** Almacén interno de conceptos utilizando un mapa ordenado por su folio único. */
+
     private final Map<Folio, Concepto> elementos = new LinkedHashMap<>();
 
     /** Constructor con número variable de argumentos. */
@@ -48,13 +50,33 @@ public class CatalogoConceptos implements Iterable<Concepto>, Serializable {
         }//throw new UnsupportedOperationException("TODO E09");
     }
 
+    /**
+     * Busca y retorna un concepto dentro del catálogo utilizando su folio único.
+     *
+     * @param clave El folio del concepto a buscar.
+     * @return Un {@link Optional} que contiene el concepto si es encontrado; o vacío en caso contrario.
+     */
+
     public Optional<Concepto> buscar(Folio clave) {
         return Optional.ofNullable(elementos.get(clave));
     }
 
+    /**
+     * Retira o elimina un concepto del catálogo basándose en su folio.
+     *
+     * @param clave El folio del concepto que se desea retirar.
+     * @return {@code true} si el concepto fue encontrado y eliminado con éxito; {@code false} en caso contrario.
+     */
+
     public boolean retirar(Folio clave) {
         return elementos.remove(clave) != null;
     }
+
+    /**
+     * Obtiene el número total de conceptos almacenados actualmente en el catálogo.
+     *
+     * @return Cantidad de elementos en el catálogo.
+     */
 
     public int tamanio() {
         return elementos.size();

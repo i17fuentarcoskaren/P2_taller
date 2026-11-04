@@ -12,6 +12,7 @@ import java.sql.Statement;
  */
 public final class ConexionSQLite implements AutoCloseable {
 
+    /** Definición de las sentencias SQL para la creación inicial del esquema de la base de datos. */
     private static final String[] ESQUEMA = {
         """
         CREATE TABLE IF NOT EXISTS concepto (
@@ -51,7 +52,7 @@ public final class ConexionSQLite implements AutoCloseable {
             throw new ExceptionInInitializerError("No se encontró el controlador sqlite-jdbc en el classpath");
         }
     }
-
+    /** Instancia de la conexión JDBC activa. */
     private final Connection conexion;
 
     /** @param rutaArchivo archivo .db (se crea si no existe) */
@@ -73,6 +74,11 @@ public final class ConexionSQLite implements AutoCloseable {
         }
         //throw new UnsupportedOperationException("TODO E13");
     }
+    /**
+     * Obtiene la conexión JDBC subyacente.
+     *
+     * @return Instancia de {@link Connection}.
+     */
 
     public Connection conexion() {
         return conexion;

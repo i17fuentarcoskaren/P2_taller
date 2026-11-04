@@ -28,9 +28,20 @@ public enum Estado {
         //throw new UnsupportedOperationException("TODO E07");
     }
 
+    /**
+     * Comprueba si el estado actual corresponde a un estado terminal (sin transiciones posteriores).
+     *
+     * @return {@code true} si es CERRADA o CANCELADA; {@code false} en caso contrario.
+     */
+
     public boolean esTerminal() {
         return this == CERRADA || this == CANCELADA;
     }
+    /**
+     * Devuelve la etiqueta descriptiva del estado como su representación en cadena.
+     *
+     * @return Cadena con la etiqueta del estado.
+     */
 
     @Override
     public String toString() {

@@ -54,6 +54,11 @@ public final class VentanaPrincipal extends JFrame {
     private String seccion = "Inicio";
     private boolean oscuro;
 
+    /**
+     * Construye y configura la ventana principal de administración del taller mecánico.
+     *
+     * @param taller Instancia de la fachada {@link Taller}. No debe ser nula.
+     */
     public VentanaPrincipal(Taller taller) {
         super("TALLER / P2 · Administración de taller mecánico");
         this.taller = Objects.requireNonNull(taller, "taller");
@@ -73,7 +78,7 @@ public final class VentanaPrincipal extends JFrame {
         construirMarco();
         mostrar("Inicio");
     }
-
+    /** Libera los recursos de suscripción de eventos al cerrar la ventana. */
     @Override public void dispose() {
         taller.desuscribir(oyente);
         super.dispose();
@@ -85,6 +90,7 @@ public final class VentanaPrincipal extends JFrame {
     private Color tenue() { return oscuro ? new Color(168, 183, 199) : MUTED; }
     private Color borde() { return oscuro ? new Color(56, 70, 89) : new Color(228, 234, 242); }
 
+    /** Construye el marco estructural general de la ventana, incluyendo menú lateral y barra superior. */
     private void construirMarco() {
         getContentPane().removeAll();
         getContentPane().setLayout(new BorderLayout());
@@ -133,6 +139,7 @@ public final class VentanaPrincipal extends JFrame {
         repaint();
     }
 
+    /** Alterna entre el tema visual claro y oscuro utilizando FlatLaf. */
     private void alternarTema() {
         oscuro = !oscuro;
         if (oscuro) FlatDarkLaf.setup(); else FlatLightLaf.setup();
@@ -140,7 +147,7 @@ public final class VentanaPrincipal extends JFrame {
         construirMarco();
         mostrar(seccion);
     }
-
+    /** Crea y configura el panel de menú lateral de navegación. */
     private JPanel crearMenu() {
         botonesMenu.clear();
         JPanel menu = new JPanel(new BorderLayout());
@@ -398,6 +405,15 @@ public final class VentanaPrincipal extends JFrame {
         };
     }
 
+    /**
+     * Crea una tarjeta estadística para el panel de control.
+     *
+     * @param clave       Título de la tarjeta.
+     * @param valor       Valor numérico a mostrar.
+     * @param descripcion Descripción breve.
+     * @param acento      Color de acento visual.
+     * @return Panel configurado como tarjeta.
+     */
     private JPanel tarjeta(String clave, int valor, String descripcion, Color acento) {
         JPanel p = caja(new BorderLayout(0, 9), 17);
         JLabel cab = new JLabel(clave);
@@ -420,6 +436,14 @@ public final class VentanaPrincipal extends JFrame {
         p.add(desc, BorderLayout.SOUTH);
         return p;
     }
+
+    /**
+     * Crea un panel contenedor con bordes redondeados y estilo de caja.
+     *
+     * @param layout Layout manager del panel.
+     * @param margen Margen interior en píxeles.
+     * @return Panel redondeado configurado.
+     */
 
     private JPanel caja(LayoutManager layout, int margen) {
         JPanel panel = new PanelRedondeado(superficie(), borde());
@@ -491,7 +515,6 @@ public final class VentanaPrincipal extends JFrame {
         ejecutar(() -> taller.registrarCliente(nombre.getText().strip(), correo.getText().strip(), (Nivel) nivel.getSelectedItem()),
                 "Cliente registrado y guardado en SQLite");
     }
-
     private void editarCliente(int id) {
         Cliente c = taller.cliente(id);
         JTextField nombre = new JTextField(c.nombre(), 23);
@@ -528,6 +551,7 @@ public final class VentanaPrincipal extends JFrame {
         return taller.catalogo().ordenados(Comparator.comparing(c -> c.clave().toString()));
     }
 
+    /** Obtiene la lista de conceptos del taller ordenada por su clave. */
     private String atributo(Concepto c) {
         return switch (c) {
             case Concepto.Refaccion r -> r.marca();
@@ -535,7 +559,7 @@ public final class VentanaPrincipal extends JFrame {
             case Concepto.Diagnostico d -> d.equipo();
         };
     }
-
+    /** Muestra el diálogo para registrar un nuevo concepto en el catálogo. */
     private void nuevoConcepto() {
         JComboBox<String> tipo = new JComboBox<>(new String[]{"Refacción", "Mano de obra", "Diagnóstico"});
         JTextField nombre = new JTextField(22);

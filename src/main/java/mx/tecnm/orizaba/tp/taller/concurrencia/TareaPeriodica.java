@@ -10,11 +10,21 @@ package mx.tecnm.orizaba.tp.taller.concurrencia;
  * </ul>
  */
 public abstract class TareaPeriodica implements Runnable {
-
+    /** Periodo de tiempo en milisegundos entre cada ejecución de ciclo. */
     private final long periodoMs;
+    /** Bandera volátil que indica si la tarea se encuentra activa. */
     private volatile boolean activa;
+    /** Hilo de ejecución asociado a la tarea periódica. */
     private Thread hilo;
+    /** Contador atómico o volátil que registra el número total de ciclos ejecutados. */
     private volatile long ciclos;
+
+    /**
+     * Construye una nueva tarea periódica con el periodo especificado.
+     *
+     * @param periodoMs Tiempo en milisegundos entre ciclos. Debe ser mayor a cero.
+     * @throws IllegalArgumentException Si el periodo especificado es menor o igual a cero.
+     */
 
     protected TareaPeriodica(long periodoMs) {
         if (periodoMs <= 0) {
@@ -22,6 +32,13 @@ public abstract class TareaPeriodica implements Runnable {
         }
         this.periodoMs = periodoMs;
     }
+
+    /**
+     * Arranca el hilo (demonio) con el nombre indicado de manera sincronizada.
+     *
+     * @param nombreHilo Nombre que se le asignará al hilo de ejecución.
+     * @throws IllegalStateException Si la tarea ya se encuentra activa.
+     */
 
     /** Arranca el hilo (demonio) con el nombre indicado. */
     public final synchronized void iniciar(String nombreHilo) {
@@ -56,14 +73,30 @@ public abstract class TareaPeriodica implements Runnable {
         }
         //throw new UnsupportedOperationException("TODO E12");
     }
+    /**
+     * Comprueba si la tarea se encuentra actualmente activa.
+     *
+     * @return {@code true} si la tarea está activa; {@code false} en caso contrario.
+     */
 
     public final boolean activa() {
         return activa;
     }
 
+    /**
+     * Obtiene el número total de ciclos ejecutados por la tarea.
+     *
+     * @return Cantidad de ciclos completados.
+     */
+
     public final long ciclos() {
         return ciclos;
     }
+
+    /**
+     * Método principal de ejecución del hilo que sigue el patrón Template Method.
+     * Ejecuta ciclos periódicos de trabajo mientras la bandera de actividad permanezca encendida.
+     */
 
     @Override
     public final void run() {

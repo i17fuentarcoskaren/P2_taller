@@ -22,8 +22,10 @@ import java.util.List;
  */
 public final class Respaldo {
 
+    /** Identificador de versión para validar la compatibilidad del archivo de respaldo binario. */
     public static final String ENCABEZADO = "Respaldo Taller v1";
 
+    /** Constructor privado para evitar la instanciación de esta clase de utilidad estática. */
     private Respaldo() {
     }
 
@@ -53,6 +55,16 @@ public final class Respaldo {
         }
         //throw new UnsupportedOperationException("TODO E14");
     }
+
+    /**
+     * Importa y deserializa el contenido completo de un archivo de respaldo binario,
+     * validando estrictamente que el encabezado coincida con la versión esperada.
+     *
+     * @param archivo Ruta del archivo de respaldo desde el cual se importarán los datos.
+     * @return Una instancia de {@link Contenido} con los datos restaurados.
+     * @throws IOException            si ocurre un error de E/S o si el formato del encabezado no es válido.
+     * @throws ClassNotFoundException si alguna de las clases serializadas no se encuentra en el classpath.
+     */
 
     @SuppressWarnings("unchecked")
     public static Contenido importar(Path archivo) throws IOException, ClassNotFoundException {

@@ -22,10 +22,20 @@ import java.util.Optional;
  */
 public class RepositorioOrdenServicioSQLite implements Repositorio<OrdenServicio, Integer> {
 
+    /** Administrador de la conexión a la base de datos SQLite. */
     private final ConexionSQLite bd;
+    /** Repositorio auxiliar para gestionar y resolver los clientes asociados a las órdenes. */
     private final Repositorio<Cliente, Integer> clientes;
+    /** Repositorio auxiliar para gestionar y resolver los conceptos cotizables que componen las líneas. */
     private final Repositorio<Concepto, Folio> elementos;
 
+    /**
+     * Construye un nuevo repositorio de órdenes de servicio con la conexión y repositorios dependientes especificados.
+     *
+     * @param bd        Instancia de {@link ConexionSQLite}.
+     * @param clientes  Repositorio de clientes.
+     * @param elementos Repositorio de conceptos.
+     */
     public RepositorioOrdenServicioSQLite(ConexionSQLite bd, Repositorio<Cliente, Integer> clientes,
                                           Repositorio<Concepto, Folio> elementos) {
         this.bd = bd;
@@ -137,10 +147,17 @@ public class RepositorioOrdenServicioSQLite implements Repositorio<OrdenServicio
 
         // Restaurar el estado de la orden si es diferente al inicial
         Estado estado = Estado.valueOf(estadoStr);
-        //restaurar estaod
+        //restaurar estado persistido de la orden
         orden.restaurarEstado(estado);
         return orden;
     }
+    /**
+     * Obtiene una lista con todas las órdenes de servicio registradas en la base de datos,
+     * completamente reconstruidas y ordenadas por su identificador.
+     *
+     * @return Una lista de {@link OrdenServicio}.
+     * @throws PersistenciaException si ocurre un error de SQL durante la consulta.
+     */
 
     @Override
     public List<OrdenServicio> todos() {
@@ -159,6 +176,15 @@ public class RepositorioOrdenServicioSQLite implements Repositorio<OrdenServicio
             return ordenes;
         });
     }
+
+    /**
+     * Elimina una orden de servicio de la base de datos basándose en su identificador único
+     * (las líneas asociadas se eliminan automáticamente mediante la restricción de cascada en la BD).
+     *
+     * @param id Identificador numérico de la orden a eliminar.
+     * @return {@code true} si se eliminó al menos un registro; {@code false} en caso contrario.
+     * @throws PersistenciaException si ocurre un error de SQL durante la eliminación.
+     */
 
     @Override
     public boolean eliminar(Integer id) {

@@ -15,11 +15,35 @@ import java.util.Optional;
  */
 public interface Repositorio<T, K> {
 
+    /**
+     * Guarda o actualiza una entidad en el repositorio.
+     *
+     * @param entidad La entidad que se va a guardar.
+     */
+
     void guardar(T entidad);
+    /**
+     * Busca y recupera una entidad utilizando su clave única.
+     *
+     * @param clave La clave o identificador de la entidad a buscar.
+     * @return Un {@link Optional} que contiene la entidad si es encontrada; o vacío en caso contrario.
+     */
 
     Optional<T> buscar(K clave);
+    /**
+     * Obtiene una lista con todas las entidades almacenadas en el repositorio.
+     *
+     * @return Una lista de entidades.
+     */
 
     List<T> todos();
+
+    /**
+     * Elimina una entidad del repositorio basándose en su clave única.
+     *
+     * @param clave La clave de la entidad a eliminar.
+     * @return {@code true} si la entidad fue encontrada y eliminada con éxito; {@code false} en caso contrario.
+     */
 
     boolean eliminar(K clave);
 

@@ -48,15 +48,23 @@ public class Taller implements AutoCloseable {
     /** Días tras los cuales una orden en curso genera una alerta. */
     public static final int PLAZO_DIAS = 5;
 
+    /** Catálogo local de conceptos disponibles en el taller. */
     private final CatalogoConceptos catalogo = new CatalogoConceptos();
+    /** Mapa concurrente que almacena los clientes registrados en memoria. */
     private final Map<Integer, Cliente> clientes = new ConcurrentHashMap<>();
+    /** Mapa concurrente que almacena las órdenes de servicio registradas en memoria. */
     private final Map<Integer, OrdenServicio> registros = new ConcurrentHashMap<>();
+    /** Conjunto concurrente que lleva el seguimiento de los identificadores de órdenes que ya han generado una alerta. */
     private final Set<Integer> alertados = ConcurrentHashMap.newKeySet();
+    /** Lista segura para hilos que contiene a los oyentes suscritos al sistema de eventos. */
     private final List<OyenteEvento> oyentes = new CopyOnWriteArrayList<>();
-
+    /** Repositorio de conceptos persistidos en SQLite. */
     private final Repositorio<Concepto, Folio> repoElementos;
+    /** Repositorio de clientes persistidos en SQLite. */
     private final Repositorio<Cliente, Integer> repoClientes;
+    /** Repositorio de órdenes de servicio persistidas en SQLite. */
     private final Repositorio<OrdenServicio, Integer> repoRegistros;
+    /** Proveedor de la fecha actual (inyectable para pruebas y simulación). *//** Proveedor de la fecha actual (inyectable para pruebas y simulación). */
     private final Supplier<LocalDate> reloj;
     private MonitorAvance monitor;
 
@@ -72,7 +80,7 @@ public class Taller implements AutoCloseable {
         this.reloj = reloj;
         cargar();
     }
-
+    /** Carga inicial de datos desde los repositorios de persistencia hacia las estructuras en memoria. */
     private void cargar() {
         repoElementos.todos().forEach(catalogo::agregar);
         repoClientes.todos().forEach(cliente -> clientes.put(cliente.id(), cliente));
@@ -80,7 +88,11 @@ public class Taller implements AutoCloseable {
     }
 
     // ------------------------------------------------------------------ eventos
-
+    /**
+     * Suscribe un nuevo oyente para recibir notificaciones de eventos del sistema.
+     *
+     * @param oyente Instancia de {@link OyenteEvento}.
+     */
     public void suscribir(OyenteEvento oyente) {
         oyentes.add(oyente);
     }
@@ -96,6 +108,17 @@ public class Taller implements AutoCloseable {
 
     // ------------------------------------------------------------------ catálogo
 
+    /**
+     * Registra un nuevo concepto en el catálogo y lo persiste en la base de datos.
+     *
+     * @param fabrica  Fábrica funcional para instanciar el concepto.
+     * @param nombre   Nombre descriptivo del concepto.
+     * @param precio   Precio base.
+     * @param atributo Atributo específico del subtipo.
+     * @param <E>      Tipo de elemento (subclase de {@link Concepto}).
+     * @param <A>      Tipo del atributo.
+     * @return El concepto creado y registrado.
+     */
     public <E extends Concepto, A> E registrar(FabricaElemento<E, A> fabrica, String nombre, double precio, A atributo) {
         E elemento = fabrica.crear(nombre, precio, atributo);
         repoElementos.guardar(elemento);
@@ -258,19 +281,35 @@ public class Taller implements AutoCloseable {
         repoRegistros.guardar(t);
         return ok;
     }
-
+    /**
+     * Pone en curso (inicia) una orden de servicio.
+     *
+     * @param idOrdenServicio Identificador de la orden.
+     */
     public void iniciar(int idOrdenServicio) {
         transitar(idOrdenServicio, OrdenServicio::iniciar);
     }
+
+    /**
+     * Cierra una orden de servicio.
+     *
+     * @param idOrdenServicio Identificador de la orden.
+     */
 
     public void cerrar(int idOrdenServicio) {
         transitar(idOrdenServicio, OrdenServicio::cerrar);
     }
 
+    /**
+     * Cancela una orden de servicio.
+     *
+     * @param idOrdenServicio Identificador de la orden.
+     */
     public void cancelar(int idOrdenServicio) {
         transitar(idOrdenServicio, OrdenServicio::cancelar);
     }
 
+    /** Método auxiliar que aplica una transición de estado a una orden y persiste el cambio. */
     private void transitar(int id, Consumer<OrdenServicio> transicion) {
         OrdenServicio orden = registro(id);
         transicion.accept(orden);
@@ -293,10 +332,16 @@ public class Taller implements AutoCloseable {
 
     // ------------------------------------------------------------------ reportes (streams)
 
+    /** Flujo auxiliar que emite únicamente las órdenes de servicio cerradas. */
     private Stream<OrdenServicio> cerrados() {
         return registros.values().stream().filter(t -> t.estado() == Estado.CERRADA);
     }
 
+    /**
+     * Calcula los ingresos totales agrupados por el tipo de concepto, basándose en las órdenes cerradas.
+     *
+     * @return Mapa ordenado con los ingresos por cada tipo de concepto.
+     */
     public Map<String, Double> ingresosPorTipo() {
         return cerrados().flatMap(v -> v.lineas().stream()).collect(Collectors.groupingBy(
                 linea -> linea.elemento().tipo(),
@@ -314,6 +359,13 @@ public class Taller implements AutoCloseable {
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey);
     }
+
+    /**
+     * Obtiene los mejores {@code n} clientes ordenados de mayor a menor según el importe total de sus órdenes cerradas.
+     *
+     * @param n Número máximo de clientes a retornar.
+     * @return Lista de los mejores clientes.
+     */
 
     public List<Cliente> mejores(int n) {
         Map<Cliente, Double> totales = cerrados().collect(Collectors.groupingBy(
@@ -345,11 +397,26 @@ public class Taller implements AutoCloseable {
         return catalogo.filtrar(regla);
     }
 
+    /**
+     * Proyecta los conceptos del catálogo aplicando una función de transformación.
+     *
+     * @param funcion Función de mapeo o proyección.
+     * @param <R>     Tipo de dato resultante de la proyección.
+     * @return Lista con los elementos proyectados.
+     */
+
     public <R> List<R> proyectar(Function<? super Concepto, ? extends R> funcion) {
         return catalogo.ordenados(Comparator.comparing(Concepto::clave)).stream()
                 .<R>map(funcion)
                 .toList();
     }
+
+    /**
+     * Genera una descripción detallada y legible de un concepto según su subtipo y características.
+     *
+     * @param e Instancia de {@link Concepto}.
+     * @return Cadena descriptiva.
+     */
 
     public String describir(Concepto e) {
         return switch (e) {
@@ -391,7 +458,12 @@ public class Taller implements AutoCloseable {
         return acciones;
         //throw new UnsupportedOperationException("TODO E12")
     }
-
+    /**
+     * Inicia el hilo monitor periódico para la revisión automática de avance de las órdenes.
+     *
+     * @param periodoMs Intervalo de tiempo en milisegundos entre cada ciclo de revisión.
+     * @throws IllegalStateException si el monitor ya se encuentra activo.
+     */
     public synchronized void iniciarMonitor(long periodoMs) {
         if (monitor != null && monitor.activa()) {
             throw new IllegalStateException("El monitor ya está activo");
@@ -429,10 +501,17 @@ public class Taller implements AutoCloseable {
 
     // ------------------------------------------------------------------ respaldo
 
+    /**
+     * Exporta un respaldo binario completo del taller (catálogo, clientes y registros de órdenes) hacia un archivo.
+     *
+     * @param archivo Ruta del archivo de destino del respaldo.
+     * @throws IOException si ocurre un error de E/S durante la exportación.
+     */
     public void exportarRespaldo(Path archivo) throws IOException {
         Respaldo.exportar(archivo, catalogo, clientes(), registros());
     }
 
+    /** Cierra los recursos del taller, deteniendo de manera segura el hilo monitor activo. */
     @Override
     public void close() {
         try {

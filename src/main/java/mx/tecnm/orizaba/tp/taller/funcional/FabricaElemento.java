@@ -13,5 +13,14 @@ import mx.tecnm.orizaba.tp.taller.modelo.Concepto;
 @FunctionalInterface
 public interface FabricaElemento<E extends Concepto, A> {
 
+    /**
+     * Crea y retorna una nueva instancia del subtipo concreto de {@code Concepto}.
+     *
+     * @param nombre     Nombre descriptivo o clave del elemento.
+     * @param precioBase Precio base inicial del elemento.
+     * @param atributo   Atributo específico adicional requerido por el subtipo concreto.
+     * @return Una nueva instancia del elemento de tipo {@code E}.
+     */
+
     E crear(String nombre, double precioBase, A atributo);
 }

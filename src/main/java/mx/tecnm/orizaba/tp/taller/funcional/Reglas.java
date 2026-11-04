@@ -9,15 +9,38 @@ import java.util.Locale;
  */
 public final class Reglas {
 
+    /**
+     * Constructor privado para prevenir la instanciación de esta clase utilitaria.
+     *
+     * @throws AssertionError Siempre que se intente invocar mediante reflexión.
+     */
+
     private Reglas() {
         throw new AssertionError("No instanciable");
     }
 
+    /**
+     * Crea una regla para filtrar conceptos cuyo precio base sea menor o igual al valor máximo especificado.
+     *
+     * @param maximo El precio base límite permitido.
+     * @return Una {@link Regla} que evalúa si el precio base es menor o igual al máximo.
+     */
+
     public static Regla<Concepto> precioHasta(double maximo) {
         // TODO E11: Lambda que acepta los elementos cuyo precioBase() sea menor o igual que maximo.
+
+        // Lambda que acepta los elementos cuyo precioBase() sea menor o igual que maximo.
         return c -> c.precioBase() <= maximo;
         //throw new UnsupportedOperationException("TODO E11");
     }
+
+    /**
+     * Crea una regla para filtrar conceptos cuyo nombre contenga el texto especificado,
+     * ignorando diferencias entre mayúsculas y minúsculas.
+     *
+     * @param texto El texto o subcadena que se desea buscar en el nombre del concepto.
+     * @return Una {@link Regla} que evalúa si el nombre contiene el texto dado (insensible a mayúsculas/minúsculas).
+     */
 
     public static Regla<Concepto> nombreContiene(String texto) {
         // TODO E11: Lambda insensible a mayúsculas/minúsculas sobre nombre().

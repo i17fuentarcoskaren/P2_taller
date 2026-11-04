@@ -13,9 +13,27 @@ public interface Cotizable {
     /** Constante de interfaz: implícitamente {@code public static final}. */
     double TASA_IMPUESTO = 0.16;
 
+    /**
+     * Obtiene la clave o folio único del elemento cotizable.
+     *
+     * @return Instancia de {@link Folio}.
+     */
+
     Folio clave();
 
+    /**
+     * Obtiene el nombre descriptivo del elemento cotizable.
+     *
+     * @return Una cadena con el nombre.
+     */
+
     String nombre();
+
+    /**
+     * Obtiene el precio base unitario del elemento.
+     *
+     * @return Valor numérico del precio base.
+     */
 
     double precioBase();
 

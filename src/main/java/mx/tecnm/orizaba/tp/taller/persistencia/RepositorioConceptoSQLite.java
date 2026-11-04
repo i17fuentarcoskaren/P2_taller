@@ -26,13 +26,15 @@ public class RepositorioConceptoSQLite implements Repositorio<Concepto, Folio> {
         Concepto crear(Folio clave, String nombre, double precio, String atributo);
     }
 
+    /** Mapa asociativo que vincula cada nombre de subtipo con su respectiva lambda reconstructora. */
     private static final Map<String, Reconstructor> RECONSTRUCTORES = Map.of(
             "Refaccion", (c, n, p, a) -> new Concepto.Refaccion(c, n, p, a),
             "ManoDeObra", (c, n, p, a) -> new Concepto.ManoDeObra(c, n, p, Integer.parseInt(a)),
             "Diagnostico", (c, n, p, a) -> new Concepto.Diagnostico(c, n, p, a)
     );
-
+    /** Administrador de la conexión a la base de datos SQLite. */
     private final ConexionSQLite bd;
+    /** Mapeador funcional que convierte una fila de {@link ResultSet} en una instancia concreta de {@link Concepto}. */
     private final MapeadorFila<Concepto> mapeador = rs -> {
         Reconstructor r = RECONSTRUCTORES.get(rs.getString("tipo"));
         if (r == null) {
@@ -41,6 +43,12 @@ public class RepositorioConceptoSQLite implements Repositorio<Concepto, Folio> {
         return r.crear(Folio.parse(rs.getString("clave")), rs.getString("nombre"),
                 rs.getDouble("precio_base"), rs.getString("atributo"));
     };
+
+    /**
+     * Construye un nuevo repositorio de conceptos asociado a la conexión especificada.
+     *
+     * @param bd Instancia de {@link ConexionSQLite}.
+     */
 
     public RepositorioConceptoSQLite(ConexionSQLite bd) {
         this.bd = bd;
@@ -85,6 +93,14 @@ public class RepositorioConceptoSQLite implements Repositorio<Concepto, Folio> {
         //throw new UnsupportedOperationException("TODO E13");
     }
 
+    /**
+     * Busca y recupera un concepto utilizando su folio único.
+     *
+     * @param clave El {@link Folio} del concepto a buscar.
+     * @return Un {@link Optional} con el concepto encontrado; o vacío en caso contrario.
+     * @throws PersistenciaException si ocurre un error de SQL durante la consulta.
+     */
+
     @Override
     public Optional<Concepto> buscar(Folio clave) {
         // TODO E13: SELECT por clave; mapear con mapeador si hay fila.
@@ -110,6 +126,13 @@ public class RepositorioConceptoSQLite implements Repositorio<Concepto, Folio> {
         }
         //throw new UnsupportedOperationException("TODO E13");
     }
+
+    /**
+     * Obtiene una lista con todos los conceptos registrados en la base de datos, ordenados por su folio.
+     *
+     * @return Una lista de {@link Concepto}.
+     * @throws PersistenciaException si ocurre un error de SQL durante la consulta.
+     */
 
     @Override
     public List<Concepto> todos() {
@@ -141,6 +164,14 @@ public class RepositorioConceptoSQLite implements Repositorio<Concepto, Folio> {
                     "Error al consultar los conceptos", error);
         }
     }
+
+    /**
+     * Elimina un concepto de la base de datos basándose en su folio único.
+     *
+     * @param clave El {@link Folio} del concepto a eliminar.
+     * @return {@code true} si se afectó al menos una fila; {@code false} en caso contrario.
+     * @throws PersistenciaException si ocurre un error de SQL durante la eliminación.
+     */
 
     @Override
     public boolean eliminar(Folio clave) {

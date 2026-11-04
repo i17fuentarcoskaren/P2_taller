@@ -1,0 +1,439 @@
+@startuml
+title P2 – Gestión de Órdenes de Servicio de un Taller Mecánico
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package modelo {
+  interface Cotizable {
+    {static} +TASA_IMPUESTO : double
+    +clave() : Folio
+    +nombre() : String
+    +precioBase() : double
+    +tarifa(u : int) : double
+    +tarifaConImpuesto(u : int) : double <<default>>
+    {static} +porNombre() : Comparator
+  }
+  interface ConGarantia {
+    +mesesGarantia() : int
+    +descripcionCorta() : String <<default>>
+  }
+  interface Certificable {
+    +norma() : String
+    +descripcionCorta() : String <<default>>
+  }
+  abstract class Concepto <<sealed>> {
+    -clave : Folio
+    -nombre : String
+    -precioBase : double
+    -creadoEn : LocalDateTime
+    -cotizaciones : int <<transient>>
+    {static} -INSTANCIAS_CREADAS : AtomicInteger
+    #Concepto(prefijo, nombre, precio)
+    #Concepto(clave, nombre, precio)
+    +clave() : Folio <<final>>
+    +nombre() : String <<final>>
+    +precioBase() : double <<final>>
+    +creadoEn() : LocalDateTime
+    +cotizaciones() : int
+    +tarifa(u : int) : double <<final>>
+    {abstract} #calcularTarifa(u : int) : double
+    {abstract} +copiar() : Concepto
+    +setNombre(n : String)
+    +setPrecioBase(p : double)
+    +tipo() : String
+    {static} +instanciasCreadas() : int
+    +equals(o) / hashCode() <<final>>
+  }
+  class "Concepto.Refaccion" as Refaccion <<static final>> {
+    {static} +PREFIJO : String = "REF"
+    -marca : String
+    +Refaccion(nombre, precio, marca : String)
+    +Refaccion(clave, nombre, precio, marca)
+    +marca() : String
+    +mesesGarantia() : int
+    #calcularTarifa(u : int) : double
+    +copiar() : Refaccion
+  }
+  class "Concepto.ManoDeObra" as ManoDeObra <<static final>> {
+    {static} +PREFIJO : String = "MOB"
+    -nivelTecnico : int
+    +ManoDeObra(nombre, precio, nivelTecnico : int)
+    +ManoDeObra(clave, nombre, precio, nivelTecnico)
+    +nivelTecnico() : int
+    +norma() : String
+    #calcularTarifa(u : int) : double
+    +copiar() : ManoDeObra
+  }
+  class "Concepto.Diagnostico" as Diagnostico <<static final>> {
+    {static} +PREFIJO : String = "DIA"
+    -equipo : String
+    +Diagnostico(nombre, precio, equipo : String)
+    +Diagnostico(clave, nombre, precio, equipo)
+    +equipo() : String
+    +mesesGarantia() : int
+    +norma() : String
+    #calcularTarifa(u : int) : double
+    +copiar() : Diagnostico
+    +descripcionCorta() : String
+  }
+  class Folio <<record>> {
+    prefijo : String
+    numero : int
+    {static} -SECUENCIAS : Map<String, AtomicInteger>
+    {static} +siguiente(prefijo : String) : Folio
+    {static} +registrar(c : Folio)
+    {static} +parse(texto : String) : Folio
+    +compareTo(o : Folio) : int
+    +toString() : String
+  }
+  enum Nivel {
+    OCASIONAL (0%)
+    FRECUENTE (8%)
+    FLOTILLA (15%)
+    -etiqueta : String
+    -descuento : double
+    +etiqueta() : String
+    +descuento() : double
+    +aplicar(monto : double) : double
+  }
+  enum Estado {
+    ABIERTA
+    EN_CURSO
+    CERRADA
+    CANCELADA
+    -etiqueta : String
+    +etiqueta() : String
+    +permiteTransicionA(d : Estado) : boolean
+    +esTerminal() : boolean
+  }
+  class Cliente <<Externalizable>> {
+    -id : int
+    -nombre : String
+    -correo : String
+    -nivel : Nivel
+    {static} -CORREO : Pattern
+    +Cliente()
+    +Cliente(id, nombre, correo, nivel)
+    +Cliente(id, nombre, correo)
+    +id() / nombre() / correo() / nivel()
+    +setNombre(n) / setCorreo(c) / setNivel(n) <<final>>
+    +writeExternal(out)
+    +readExternal(in)
+    +equals / hashCode / toString
+  }
+  class OrdenServicio <<Serializable, Iterable>> {
+    -id : int
+    -cliente : Cliente
+    -fecha : LocalDate
+    -estado : Estado
+    -lineas : List<Linea>
+    {static} -SECUENCIA : AtomicInteger
+    +OrdenServicio(cliente)
+    +OrdenServicio(id, cliente, fecha)
+    +id() / cliente() / fecha()
+    +estado() : Estado <<sync>>
+    +agregar(e : Concepto, u : int) : Linea <<sync>>
+    +quitar(c : Folio) : boolean <<sync>>
+    +cambiarEstado(d : Estado) <<sync>>
+    +iniciar() / cerrar() / cancelar()
+    +restaurarEstado(e : Estado) <<sync>>
+    +lineas() : List<Linea> <<sync>>
+    +subtotal() : double <<sync>>
+    +total() : double <<sync>>
+    +diasDesde(hoy : LocalDate) : long
+    +iterator() : Iterator<Linea>
+  }
+  class "OrdenServicio.Linea" as Linea <<inner final>> {
+    -elemento : Concepto
+    -unidades : int
+    -Linea(e, u)
+    +elemento() : Concepto
+    +unidades() : int
+    +subtotal() : double
+    +importe() : double
+    +contenedor() : OrdenServicio
+  }
+  class CatalogoConceptos <<Serializable, Iterable>> {
+    -elementos : Map<Folio, Concepto>
+    +CatalogoConceptos(iniciales : Concepto...)
+    +agregar(nuevos : Concepto...) <<final>>
+    +buscar(c : Folio) : Optional<Concepto>
+    +retirar(c : Folio) : boolean
+    +tamanio() : int
+    +filtrar(r : Regla) : List
+    +deTipo(t : Class<E>) : List<E>
+    +ordenados(c : Comparator) : List
+    {static} +porTarifa(u : int) : Comparator <<anónima>>
+    +resumen() : String <<clase local>>
+    +iterator() : Iterator<Concepto>
+  }
+  class "CatalogoConceptos.Iterador" as Iterador <<private inner>> {
+    -instantanea : List<Concepto>
+    -cursor : int
+    +hasNext() : boolean
+    +next() : Concepto
+  }
+  class "Acumulador (en resumen())" as Acumulador <<clase local>> {
+    cuenta, suma, mínimo, máximo
+  }
+  class ReglaNegocioException <<exception>> {
+    +ReglaNegocioException(mensaje)
+  }
+}
+
+package funcional {
+  interface "Regla<T>" as Regla <<functional>> {
+    +evaluar(t : T) : boolean
+    +y(o) : Regla <<default>>
+    +o(o) : Regla <<default>>
+    +negar() : Regla <<default>>
+    +comoPredicado() : Predicate<T> <<default>>
+    {static} +todas() : Regla
+    {static} +de(p : Predicate) : Regla
+  }
+  class Reglas <<utilidad>> {
+    {static} +precioHasta(max) : Regla<Concepto>
+    {static} +nombreContiene(texto) : Regla<Concepto>
+    {static} +conCapacidad(c : Class) : Regla<Concepto>
+  }
+  interface "FabricaElemento<E extends Concepto, A>" as Fabrica <<functional>> {
+    +crear(nombre, precio, atributo : A) : E
+  }
+}
+
+package concurrencia {
+  abstract class TareaPeriodica implements Runnable {
+    -periodoMs : long
+    -activa : boolean <<volatile>>
+    -hilo : Thread
+    -ciclos : long <<volatile>>
+    #TareaPeriodica(periodoMs)
+    +iniciar(nombre : String) <<sync>>
+    +detener() <<interrupt + join>>
+    +activa() : boolean
+    +ciclos() : long
+    +run() <<final>>
+    {abstract} #ejecutarCiclo()
+  }
+}
+
+package eventos {
+  interface OyenteEvento <<functional>> {
+    +notificar(e : Evento)
+    +luego(o : OyenteEvento) : OyenteEvento <<default>>
+  }
+  class Evento <<record>> {
+    tipo : TipoEvento
+    mensaje : String
+    instante : LocalDateTime
+    {static} +de(tipo, mensaje) : Evento
+  }
+  enum TipoEvento {
+    ALTA
+    CAMBIO_ESTADO
+    ALERTA
+    CANCELACION_AUTOMATICA
+  }
+}
+
+package persistencia {
+  interface "Repositorio<T,K>" as Repositorio {
+    +guardar(t : T)
+    +buscar(k : K) : Optional<T>
+    +todos() : List<T>
+    +eliminar(k : K) : boolean
+    +existe(k : K) : boolean <<default>>
+    +guardarTodos(it : Iterable<T>) <<default>>
+  }
+  interface "Repositorio.MapeadorFila<R>" as Mapeador <<miembro>> {
+    +mapear(rs : ResultSet) : R
+  }
+  class RepositorioConceptoSQLite {
+    {static} -RECONSTRUCTORES : Map<String, Reconstructor>
+    -bd : ConexionSQLite
+    {static} ~atributoDe(e) : String <<switch sellado>>
+  }
+  interface "RepositorioConceptoSQLite.Reconstructor" as Reconstructor <<private>> {
+    +reconstruir(clave, nombre, precio, atributo) : Concepto
+  }
+  class RepositorioClienteSQLite {
+    -bd : ConexionSQLite
+  }
+  class RepositorioOrdenServicioSQLite {
+    -bd : ConexionSQLite
+    -clientes : Repositorio<Cliente,Integer>
+    -elementos : Repositorio<Concepto,Folio>
+    +guardar(t) <<transacción>>
+  }
+  class ConexionSQLite implements AutoCloseable {
+    {static} -ESQUEMA : String[]
+    -conexion : Connection
+    +ConexionSQLite(ruta)
+    +conexion() : Connection
+    +enTransaccion(t : TrabajoSQL<R>) : R
+    +close()
+  }
+  interface "ConexionSQLite.TrabajoSQL<R>" as TrabajoSQL <<functional>> {
+    +ejecutar(c : Connection) : R
+  }
+  class PersistenciaException <<exception>> {
+    +PersistenciaException(mensaje, causa)
+  }
+  class Respaldo <<utilidad>> {
+    {static} +ENCABEZADO : String
+    {static} +exportar(path, catálogo, clientes, registros)
+    {static} +importar(path) : Contenido
+  }
+  class "Respaldo.Contenido" as Contenido <<record>> {
+    encabezado : String
+    fecha : LocalDateTime
+    catalogo : CatalogoConceptos
+    clientes : List<Cliente>
+    registros : List<OrdenServicio>
+  }
+}
+
+package servicio {
+  class Taller implements AutoCloseable {
+    {static} +PLAZO_DIAS : int = 5
+    -catalogo : CatalogoConceptos
+    -clientes : Map<Integer,Cliente>
+    -registros : Map<Integer,OrdenServicio>
+    -alertados : Set<Integer>
+    -reloj : Supplier<LocalDate>
+    -oyentes : List<OyenteEvento>
+    -monitor : MonitorAvance
+    +Taller(bd) / Taller(bd, reloj)
+    +registrar(f : FabricaElemento<E,A>, ...) : E
+    +actualizar(e, nombre, precio)
+    +retirar(c : Folio) : boolean
+    +catalogo() / elemento(clave)
+    +registrarCliente(...) : Cliente
+    +cambiarNivel(id, n) / actualizarCliente(...)
+    +cliente(id) / clientes() / eliminarCliente(id)
+    +abrir(id : int) : OrdenServicio
+    +agregarLinea(id, clave, u) : Linea
+    +quitarLinea(id, clave) : boolean
+    +iniciar/cerrar/cancelar(id)
+    +registro(id) / registros() / registrosEn(e)
+    +ingresosPorTipo() : Map
+    +masDemandado() : Optional
+    +mejores(n) : List
+    +estadisticas() : DoubleSummaryStatistics
+    +particionarPorPrecio(u) / conteoPorEstado()
+    +buscar(r : Regla) / proyectar(f : Function)
+    +describir(e) : String <<pattern matching>>
+    +revisar() : int <<sync>>
+    +iniciarMonitor(ms : long) / detenerMonitor()
+    +monitorActivo() : boolean
+    +suscribir(o) / desuscribir(o)
+    +exportarRespaldo(p : Path)
+    +close()
+  }
+  class "Taller.MonitorAvance" as Monitor <<inner final>> {
+    -MonitorAvance(periodoMs)
+    #ejecutarCiclo() : Taller.this.revisar()
+  }
+}
+
+package ui {
+  class VentanaPrincipal <<JFrame, Swing + FlatLaf>> {
+    -taller : Taller
+    -oyente : OyenteEvento
+    -seccion : String
+    -oscuro : boolean
+    +VentanaPrincipal(taller : Taller)
+    -vistaInicio/Clientes/Conceptos/Ordenes()
+    -vistaReportes/Monitor/Respaldo()
+    -exportarCsv() / exportarRespaldo()
+    -ejecutar(op : AccionUI, ok : String)
+  }
+  interface "VentanaPrincipal.AccionUI" as AccionUI <<private functional>> {
+    +ejecutar() throws Exception
+  }
+  class "VentanaPrincipal.ClienteOpcion" as ClienteOpcion <<private record>>
+  class "VentanaPrincipal.ConceptoOpcion" as ConceptoOpcion <<private record>>
+}
+
+package app {
+  class App <<main>> {
+    {static} +main(args)
+  }
+  class DemoModelo <<main>> {
+    {static} +main(args)
+  }
+  class PruebasModelo <<main>> {
+    {static} +main(args)
+  }
+}
+
+Concepto ..|> Cotizable
+Refaccion --|> Concepto
+Concepto +-- Refaccion
+Refaccion ..|> ConGarantia
+ManoDeObra --|> Concepto
+Concepto +-- ManoDeObra
+ManoDeObra ..|> Certificable
+Diagnostico --|> Concepto
+Concepto +-- Diagnostico
+Diagnostico ..|> ConGarantia
+Diagnostico ..|> Certificable
+Cotizable ..> Folio : usa
+Concepto --> "1" Folio : clave
+OrdenServicio *-- "1..*" Linea
+OrdenServicio +-- Linea
+Linea --> "1" Concepto
+OrdenServicio --> "1" Cliente
+OrdenServicio --> Estado
+Cliente --> Nivel
+CatalogoConceptos o-- "0..*" Concepto
+CatalogoConceptos +-- Iterador
+Iterador ..|> "Iterator<Concepto>"
+CatalogoConceptos ..> Acumulador : local
+CatalogoConceptos ..> Regla
+Reglas ..> Regla : crea
+Reglas ..> Concepto
+Fabrica ..> Concepto : crea
+Concepto ..> ReglaNegocioException : lanza
+OrdenServicio ..> ReglaNegocioException : lanza
+ReglaNegocioException --|> RuntimeException
+PersistenciaException --|> RuntimeException
+Taller +-- Monitor
+Monitor --|> TareaPeriodica
+Taller o-- "0..*" OyenteEvento
+Taller --> CatalogoConceptos
+Taller --> "3" Repositorio
+Taller ..> Evento : publica
+Taller ..> TipoEvento
+Taller ..> Respaldo
+Taller ..> ConexionSQLite : crea repos
+Taller ..> Regla
+Taller ..> Fabrica
+Taller ..> OrdenServicio
+Taller ..> Cliente
+OyenteEvento ..> Evento
+Evento --> TipoEvento
+RepositorioConceptoSQLite ..|> Repositorio
+RepositorioClienteSQLite ..|> Repositorio
+RepositorioOrdenServicioSQLite ..|> Repositorio
+Repositorio +-- Mapeador
+RepositorioConceptoSQLite +-- Reconstructor
+RepositorioConceptoSQLite --> ConexionSQLite
+RepositorioClienteSQLite --> ConexionSQLite
+RepositorioOrdenServicioSQLite --> ConexionSQLite
+RepositorioOrdenServicioSQLite --> Repositorio : clientes, elementos
+ConexionSQLite +-- TrabajoSQL
+ConexionSQLite ..> PersistenciaException : lanza
+Respaldo +-- Contenido
+Respaldo ..> CatalogoConceptos
+VentanaPrincipal --> Taller
+VentanaPrincipal ..> OyenteEvento : lambda
+VentanaPrincipal +-- AccionUI
+VentanaPrincipal +-- ClienteOpcion
+VentanaPrincipal +-- ConceptoOpcion
+App ..> VentanaPrincipal : crea
+App ..> Taller : crea
+App ..> ConexionSQLite : crea
+DemoModelo ..> Taller
+PruebasModelo ..> Taller
+@enduml
