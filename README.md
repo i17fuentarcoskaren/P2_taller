@@ -93,63 +93,69 @@ Los diagramas actualizados con las extensiones del proyecto están en [`diagrama
 
 ### Figura 1. Diagrama de clases del modelo
 
+> Haz clic en la imagen para verla en tamaño completo y poder hacer zoom.
+
 Muestra la jerarquía sellada de `Concepto` (con sus tres subtipos y las capacidades `ConGarantia` y `Certificable`), la composición `OrdenServicio ◆ Linea`, el catálogo con su iterador interno, `Folio`, los enums `Nivel` y `Estado`, y los tipos funcionales (`Regla`, `Reglas`, `FabricaElemento`).
 
-![Figura 1. Diagrama de clases del modelo](diagramas_actualizados/modelo.png)
+<a href="diagramas_actualizados/modelo.png"><img src="diagramas_actualizados/modelo.png" alt="Figura 1. Diagrama de clases del modelo" width="100%"></a>
 
 ### Figura 2. Paquetes y dependencias
 
+> Haz clic en la imagen para verla en tamaño completo y poder hacer zoom.
+
 Muestra la fachada `Taller`, el monitor (`MonitorAvance` sobre `TareaPeriodica`), los eventos, los repositorios SQLite, el respaldo, la interfaz gráfica y los programas de la aplicación.
 
-![Figura 2. Paquetes y dependencias](diagramas_actualizados/arquitectura.png)
+<a href="diagramas_actualizados/arquitectura.png"><img src="diagramas_actualizados/arquitectura.png" alt="Figura 2. Paquetes y dependencias" width="100%"></a>
 
 ### Regenerar las imágenes
 
 ```bash
 dot -Tpng diagramas_actualizados/modelo.dot -o diagramas_actualizados/modelo.png
 dot -Tpng diagramas_actualizados/arquitectura.dot -o diagramas_actualizados/arquitectura.png
-```[README.md](README.md)
+```
 
 Los archivos `.puml` se pueden abrir en [plantuml.com](https://www.plantuml.com/plantuml) o con el plugin de PlantUML de IntelliJ.
 
 ## Capturas de pantalla
+
+> Haz clic en cualquier captura para verla en tamaño completo.
 
 Capturas de la aplicación en ejecución (carpeta [`Imagenes/`](Imagenes/)). En la interfaz los estados se muestran como *Recibida*, *En reparación*, *Entregada* y *Cancelada*, que corresponden a `ABIERTA`, `EN_CURSO`, `CERRADA` y `CANCELADA` del modelo.
 
 ### Inicio
 Panel de control con el resumen de clientes, conceptos, trabajos activos y órdenes concluidas, además de las órdenes recientes y la distribución por estado.
 
-![Inicio](Imagenes/Captura1.png)
+<a href="Imagenes/Captura1.png"><img src="Imagenes/Captura1.png" alt="Inicio" width="100%"></a>
 
 ### Clientes
 Alta, edición y eliminación de clientes, con búsqueda por nombre, correo o ID y su nivel de descuento.
 
-![Clientes](Imagenes/Captura2.png)
+<a href="Imagenes/Captura2.png"><img src="Imagenes/Captura2.png" alt="Clientes" width="100%"></a>
 
 ### Conceptos
 Catálogo de refacciones, mano de obra y diagnósticos con su folio, precio base y atributo propio (marca, nivel técnico o equipo).
 
-![Conceptos](Imagenes/Captura3.png)
+<a href="Imagenes/Captura3.png"><img src="Imagenes/Captura3.png" alt="Conceptos" width="100%"></a>
 
 ### Órdenes
 Listado de órdenes con cliente, fecha, estado, número de líneas y total.
 
-![Órdenes](Imagenes/Captura4.png)
+<a href="Imagenes/Captura4.png"><img src="Imagenes/Captura4.png" alt="Órdenes" width="100%"></a>
 
 ### Reportes
 Resumen de órdenes entregadas: ingresos totales, ticket promedio, ingresos por tipo de concepto, concepto más demandado y mejores clientes. Permite exportar a CSV.
 
-![Reportes](Imagenes/Captura5.png)
+<a href="Imagenes/Captura5.png"><img src="Imagenes/Captura5.png" alt="Reportes" width="100%"></a>
 
 ### Monitor
 Eventos y alertas en tiempo real. El monitor revisa las órdenes en segundo plano y puede iniciarse, detenerse o ejecutarse manualmente.
 
-![Monitor](Imagenes/Captura6.png)
+<a href="Imagenes/Captura6.png"><img src="Imagenes/Captura6.png" alt="Monitor" width="100%"></a>
 
 ### Respaldo
 Exportación de una copia binaria del catálogo, clientes y órdenes, e inspección de un respaldo existente.
 
-![Respaldo](Imagenes/Captura7.png)
+<a href="Imagenes/Captura7.png"><img src="Imagenes/Captura7.png" alt="Respaldo" width="100%"></a>
 
 ## Conceptos de programación aplicados
 
