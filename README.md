@@ -29,7 +29,7 @@ Aplicación de escritorio para registrar clientes, conceptos de cobro (refaccion
   - Estados: `ABIERTA → EN_CURSO → CERRADA`, o `ABIERTA/EN_CURSO → CANCELADA`.
   - Solo se editan líneas mientras la orden está abierta.
 - **Reportes:** ingresos por tipo de concepto, concepto más demandado, mejores clientes, estadísticas de órdenes cerradas, conteo por estado y exportación a CSV.
-- **Monitor en segundo plano:** revisa periódicamente las órdenes. Genera una alerta si pasan de 5 días (`PLAZO_DIAS`) y cancela automáticamente las que siguen sin avanzar.
+- **Monitor en segundo plano:** revisa periódicamente las órdenes. Genera una alerta cuando una orden en reparación supera los 5 días (`PLAZO_DIAS`) y cancela automáticamente las órdenes abiertas sin líneas después de 1 día.
 - **Eventos:** la interfaz se suscribe a altas, cambios de estado, alertas y cancelaciones automáticas.
 - **Respaldo:** exporta e inspecciona catálogo, clientes y órdenes en un archivo serializado.
 
@@ -47,10 +47,11 @@ P2_taller/
 │   ├── ui/             VentanaPrincipal (Swing)
 │   └── app/            App, DemoModelo, PruebasModelo
 ├── diagramas/          Fuentes (.puml, .dot) e imágenes de los diagramas
+├── Imagenes/           Capturas de pantalla de la aplicación
 ├── lib/                JAR de SQLite para compilar sin Maven
 ├── compilar.sh · probar.sh
 ├── pom.xml
-├── Bitacora.docx
+├── BITACORA_IA.md
 └── TODO.md
 ```
 
@@ -96,6 +97,45 @@ dot -Tpng diagramas/modelo.dot -o diagramas/modelo.png
 dot -Tpng diagramas/arquitectura.dot -o diagramas/arquitectura.png
 ```
 
+## Capturas de pantalla
+
+Capturas de la aplicación en ejecución (carpeta [`Imagenes/`](Imagenes/)). En la interfaz los estados se muestran como *Recibida*, *En reparación*, *Entregada* y *Cancelada*, que corresponden a `ABIERTA`, `EN_CURSO`, `CERRADA` y `CANCELADA` del modelo.
+
+### Inicio
+Panel de control con el resumen de clientes, conceptos, trabajos activos y órdenes concluidas, además de las órdenes recientes y la distribución por estado.
+
+![Inicio](Imagenes/Captura1.png)
+
+### Clientes
+Alta, edición y eliminación de clientes, con búsqueda por nombre, correo o ID y su nivel de descuento.
+
+![Clientes](Imagenes/Captura2.png)
+
+### Conceptos
+Catálogo de refacciones, mano de obra y diagnósticos con su folio, precio base y atributo propio (marca, nivel técnico o equipo).
+
+![Conceptos](Imagenes/Captura3.png)
+
+### Órdenes
+Listado de órdenes con cliente, fecha, estado, número de líneas y total.
+
+![Órdenes](Imagenes/Captura4.png)
+
+### Reportes
+Resumen de órdenes entregadas: ingresos totales, ticket promedio, ingresos por tipo de concepto, concepto más demandado y mejores clientes. Permite exportar a CSV.
+
+![Reportes](Imagenes/Captura5.png)
+
+### Monitor
+Eventos y alertas en tiempo real. El monitor revisa las órdenes en segundo plano y puede iniciarse, detenerse o ejecutarse manualmente.
+
+![Monitor](Imagenes/Captura6.png)
+
+### Respaldo
+Exportación de una copia binaria del catálogo, clientes y órdenes, e inspección de un respaldo existente.
+
+![Respaldo](Imagenes/Captura7.png)
+
 ## Conceptos de programación aplicados
 
 Clases abstractas y selladas, interfaces con métodos `default` y `static`, genéricos acotados, clases internas (miembro, local y anónima), `record` y `enum` con comportamiento, expresiones lambda y referencias a métodos, Streams y Collectors, `switch` con pattern matching, hilos y sincronización (`synchronized`, `volatile`), serialización (`Serializable` y `Externalizable`), JDBC con transacciones y el patrón Repositorio.
@@ -106,4 +146,4 @@ Estado de los pendientes (`// TODO Exx` en el código): consulta [TODO.md](TODO.
 
 ## Bitácora
 
-El registro de uso de herramientas de apoyo y consultas está en [Bitacora.docx](Bitacora.docx).
+La bitácora de uso de inteligencia artificial está en [BITACORA_IA.md](BITACORA_IA.md).

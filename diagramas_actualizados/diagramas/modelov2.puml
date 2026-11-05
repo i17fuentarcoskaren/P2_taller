@@ -1,0 +1,247 @@
+@startuml modelo
+title Figura 1. Diagrama de clases del modelo — Gestión de Órdenes de Servicio de un Taller Mecánico
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #334155
+skinparam ArrowColor #334155
+
+' ===================== INTERFACES =====================
+interface Cotizable <<interface>> #DBEAFE {
+  {static} +TASA_IMPUESTO : double
+  {abstract} +clave() : Folio
+  {abstract} +nombre() : String
+  {abstract} +precioBase() : double
+  {abstract} +tarifa(u : int) : double
+  +tarifaConImpuesto(u : int) : double <<default>>
+  {static} +porNombre() : Comparator
+}
+interface ConGarantia <<interface>> #DBEAFE {
+  {abstract} +mesesGarantia() : int
+  +descripcionCorta() : String <<default>>
+}
+interface Certificable <<interface>> #DBEAFE {
+  {abstract} +norma() : String
+  +descripcionCorta() : String <<default>>
+}
+
+' ===================== JERARQUÍA DE CONCEPTOS =====================
+abstract class Concepto <<abstract sealed>> #FEF3C7 {
+  -clave : Folio
+  -nombre : String
+  -precioBase : double
+  -creadoEn : LocalDateTime
+  -cotizaciones : int <<transient>>
+  {static} -INSTANCIAS_CREADAS : AtomicInteger
+  #Concepto(prefijo, nombre, precio)
+  #Concepto(clave, nombre, precio)
+  +clave() : Folio <<final>>
+  +nombre() : String <<final>>
+  +precioBase() : double <<final>>
+  +creadoEn() : LocalDateTime
+  +cotizaciones() : int
+  +tarifa(u : int) : double <<final>>
+  {abstract} #calcularTarifa(u : int) : double
+  {abstract} +copiar() : Concepto
+  +setNombre(n : String)
+  +setPrecioBase(p : double)
+  +tipo() : String
+  {static} +instanciasCreadas() : int
+  +equals(o) / hashCode() <<final>>
+}
+class "Concepto.Refaccion" as Refaccion <<static final>> #FEF3C7 {
+  {static} +PREFIJO : String = "REF"
+  -marca : String
+  +Refaccion(nombre, precio, marca : String)
+  +Refaccion(clave, nombre, precio, marca)
+  +marca() : String
+  +mesesGarantia() : int
+  #calcularTarifa(u : int) : double
+  +copiar() : Refaccion
+}
+class "Concepto.ManoDeObra" as ManoDeObra <<static final>> #FEF3C7 {
+  {static} +PREFIJO : String = "MOB"
+  -nivelTecnico : int
+  +ManoDeObra(nombre, precio, nivelTecnico : int)
+  +ManoDeObra(clave, nombre, precio, nivelTecnico)
+  +nivelTecnico() : int
+  +norma() : String
+  #calcularTarifa(u : int) : double
+  +copiar() : ManoDeObra
+}
+class "Concepto.Diagnostico" as Diagnostico <<static final>> #FEF3C7 {
+  {static} +PREFIJO : String = "DIA"
+  -equipo : String
+  +Diagnostico(nombre, precio, equipo : String)
+  +Diagnostico(clave, nombre, precio, equipo)
+  +equipo() : String
+  +mesesGarantia() : int
+  +norma() : String
+  #calcularTarifa(u : int) : double
+  +copiar() : Diagnostico
+  +descripcionCorta() : String
+}
+
+' ===================== VALORES Y ENUMS =====================
+class Folio <<record>> #DCFCE7 {
+  prefijo : String
+  numero : int
+  {static} -SECUENCIAS : Map<String, AtomicInteger>
+  {static} +siguiente(prefijo : String) : Folio
+  {static} +registrar(c : Folio)
+  {static} +parse(texto : String) : Folio
+  +compareTo(o : Folio) : int
+  +toString() : String
+}
+enum Nivel <<enumeration>> #DCFCE7 {
+  OCASIONAL (0%)
+  FRECUENTE (8%)
+  FLOTILLA (15%)
+  -etiqueta : String
+  -descuento : double
+  +etiqueta() : String
+  +descuento() : double
+  +aplicar(monto : double) : double
+}
+enum Estado <<enumeration>> #DCFCE7 {
+  ABIERTA
+  EN_CURSO
+  CERRADA
+  CANCELADA
+  -etiqueta : String
+  +etiqueta() : String
+  +permiteTransicionA(d : Estado) : boolean
+  +esTerminal() : boolean
+}
+
+' ===================== ENTIDADES =====================
+class Cliente <<Externalizable>> #F1F5F9 {
+  -id : int
+  -nombre : String
+  -correo : String
+  -nivel : Nivel
+  {static} -CORREO : Pattern
+  +Cliente()
+  +Cliente(id, nombre, correo, nivel)
+  +Cliente(id, nombre, correo)
+  +id() / nombre() / correo() / nivel()
+  +setNombre(n) / setCorreo(c) / setNivel(n) <<final>>
+  +writeExternal(out)
+  +readExternal(in)
+  +equals / hashCode / toString
+}
+class OrdenServicio <<Serializable, Iterable>> #F1F5F9 {
+  -id : int
+  -cliente : Cliente
+  -fecha : LocalDate
+  -estado : Estado
+  -lineas : List<Linea>
+  {static} -SECUENCIA : AtomicInteger
+  +OrdenServicio(cliente)
+  +OrdenServicio(id, cliente, fecha)
+  +id() / cliente() / fecha()
+  +estado() : Estado <<sync>>
+  +agregar(e : Concepto, u : int) : Linea <<sync>>
+  +quitar(c : Folio) : boolean <<sync>>
+  +cambiarEstado(d : Estado) <<sync>>
+  +iniciar() / cerrar() / cancelar()
+  +restaurarEstado(e : Estado) <<sync>>
+  +lineas() : List<Linea> <<sync>>
+  +subtotal() : double <<sync>>
+  +total() : double <<sync>>
+  +diasDesde(hoy : LocalDate) : long
+  +iterator() : Iterator<Linea>
+}
+class "OrdenServicio.Linea" as Linea <<inner final>> #F1F5F9 {
+  -elemento : Concepto
+  -unidades : int
+  -Linea(e, u)
+  +elemento() : Concepto
+  +unidades() : int
+  +subtotal() : double
+  +importe() : double
+  +contenedor() : OrdenServicio
+}
+
+' ===================== CATÁLOGO =====================
+class CatalogoConceptos <<Serializable, Iterable>> #F1F5F9 {
+  -elementos : Map<Folio, Concepto>
+  +CatalogoConceptos(iniciales : Concepto...)
+  +agregar(nuevos : Concepto...) <<final>>
+  +buscar(c : Folio) : Optional<Concepto>
+  +retirar(c : Folio) : boolean
+  +tamanio() : int
+  +filtrar(r : Regla) : List
+  +deTipo(t : Class<E>) : List<E>
+  +ordenados(c : Comparator) : List
+  {static} +porTarifa(u : int) : Comparator <<anónima>>
+  +resumen() : String <<clase local>>
+  +iterator() : Iterator<Concepto>
+}
+class "CatalogoConceptos.Iterador" as Iterador <<private inner>> #F1F5F9 {
+  -instantanea : List<Concepto>
+  -cursor : int
+  +hasNext() : boolean
+  +next() : Concepto
+}
+class "Acumulador (en resumen())" as Acumulador <<clase local>> #F1F5F9 {
+  cuenta, suma, mínimo, máximo
+}
+interface "Iterator<Concepto>" as IteratorC <<interface>> #DBEAFE
+
+' ===================== FUNCIONAL Y EXCEPCIÓN =====================
+interface "Regla<T>" as Regla <<functional interface>> #FCE7F3 {
+  {abstract} +evaluar(t : T) : boolean
+  +y(o) / o(o) / negar() <<default>>
+  +comoPredicado() : Predicate<T> <<default>>
+  {static} +todas() : Regla
+  {static} +de(p : Predicate) : Regla
+}
+class Reglas <<utilidad>> #F1F5F9 {
+  {static} +precioHasta(max) : Regla<Concepto>
+  {static} +nombreContiene(texto) : Regla<Concepto>
+  {static} +conCapacidad(c : Class) : Regla<Concepto>
+}
+interface "FabricaElemento<E extends Concepto, A>" as Fabrica <<functional interface>> #FCE7F3 {
+  {abstract} +crear(nombre, precio, atributo : A) : E
+}
+class ReglaNegocioException <<exception>> #F1F5F9 {
+  +ReglaNegocioException(mensaje)
+}
+class RuntimeException #DBEAFE
+
+' ===================== RELACIONES =====================
+Cotizable <|.. Concepto
+Concepto <|-- Refaccion
+Concepto <|-- ManoDeObra
+Concepto <|-- Diagnostico
+Concepto +-- Refaccion
+Concepto +-- ManoDeObra
+Concepto +-- Diagnostico
+ConGarantia <|.. Refaccion
+ConGarantia <|.. Diagnostico
+Certificable <|.. ManoDeObra
+Certificable <|.. Diagnostico
+
+Cotizable ..> Folio : usa
+Concepto --> "1" Folio : clave
+
+OrdenServicio "1" *-- "1..*" Linea : «inner»
+Linea --> "1" Concepto
+OrdenServicio --> "1" Cliente
+OrdenServicio --> Estado
+Cliente --> Nivel
+
+CatalogoConceptos o-- "0..*" Concepto
+CatalogoConceptos +-- Iterador
+IteratorC <|.. Iterador
+CatalogoConceptos ..> Acumulador : local
+CatalogoConceptos ..> Regla
+
+Reglas ..> Regla : crea
+Reglas ..> Concepto
+Fabrica ..> Concepto : crea
+
+Concepto ..> ReglaNegocioException : lanza
+OrdenServicio ..> ReglaNegocioException : lanza
+RuntimeException <|-- ReglaNegocioException
+@enduml

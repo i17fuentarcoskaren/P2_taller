@@ -1,0 +1,234 @@
+@startuml arquitectura
+title Figura 2. Paquetes y dependencias
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #334155
+skinparam ArrowColor #334155
+
+' ===================== PRESENTACIÓN Y ARRANQUE =====================
+class "Capa de presentación (libre)" as UI <<paquete ui>> #E0E7FF {
+  JavaFX | Swing | Spring Boot | Javalin | Vaadin | ...
+}
+class VentanaPrincipal <<ui · Swing + FlatLaf>> #E0E7FF {
+  -taller : Taller
+  -oyente : OyenteEvento
+  -seccion : String
+  -oscuro : boolean
+  +VentanaPrincipal(taller : Taller)
+  -vistaInicio/Clientes/Conceptos/Ordenes()
+  -vistaReportes/Monitor/Respaldo()
+  -exportarCsv() / exportarRespaldo()
+  -ejecutar(op : AccionUI, ok : String)
+}
+class "VentanaPrincipal.AccionUI / ClienteOpcion / ConceptoOpcion" as VPInternos <<private>> #E0E7FF {
+  «functional» ejecutar() throws Exception
+  «record» ClienteOpcion(id, nombre)
+  «record» ConceptoOpcion(clave, nombre)
+  PanelRedondeado, BannerPanel
+}
+class App <<app>> #F1F5F9 {
+  {static} +main(args) <<invokeLater>>
+}
+class "DemoModelo / PruebasModelo" as Demos <<app>> #F1F5F9 {
+  {static} +main(args)
+  -Caso <<interface>> (PruebasModelo)
+}
+
+' ===================== FACHADA =====================
+class Taller <<fachada, AutoCloseable>> #FEF3C7 {
+  {static} +PLAZO_DIAS = 5
+  -catalogo : CatalogoConceptos
+  -clientes : Map<Integer, Cliente>
+  -registros : Map<Integer, OrdenServicio>
+  -alertados : Set<Integer>
+  -reloj : Supplier<LocalDate>
+  -oyentes : List<OyenteEvento>
+  -repoElementos / repoClientes / repoRegistros
+  -monitor : MonitorAvance
+  +Taller(bd) / Taller(bd, reloj)
+  +registrar(f : FabricaElemento<E,A>, ...) : E
+  +actualizar(e, nombre, precio) / retirar(c) : boolean
+  +catalogo() / elemento(clave)
+  +registrarCliente(...) : Cliente
+  +cambiarNivel(id, n) / actualizarCliente(...)
+  +cliente(id) / clientes() / eliminarCliente(id)
+  +abrir(id) : OrdenServicio
+  +agregarLinea(id, clave, u) / quitarLinea(id, clave)
+  +iniciar/cerrar/cancelar(id)
+  +registro(id) / registros() / registrosEn(e)
+  +ingresosPorTipo() : Map
+  +masDemandado() : Optional
+  +mejores(n) : List
+  +estadisticas() : DoubleSummaryStatistics
+  +particionarPorPrecio(u) / conteoPorEstado()
+  +buscar(r : Regla) / proyectar(f : Function)
+  +describir(e) : String <<pattern matching>>
+  +revisar() : int <<sync>>
+  +iniciarMonitor(ms) / detenerMonitor()
+  +monitorActivo() : boolean
+  +suscribir(o) / desuscribir(o)
+  +exportarRespaldo(p : Path) / close()
+}
+class "Taller.MonitorAvance" as Monitor <<inner final>> #FEF3C7 {
+  -MonitorAvance(periodoMs)
+  #ejecutarCiclo() → Taller.this.revisar()
+}
+abstract class TareaPeriodica <<abstract>> #FCE7F3 {
+  -periodoMs : long
+  -activa : boolean <<volatile>>
+  -hilo : Thread
+  -ciclos : long <<volatile>>
+  #TareaPeriodica(periodoMs)
+  +iniciar(nombre) <<sync>>
+  +detener() <<interrupt + join>>
+  +activa() : boolean
+  +ciclos() : long
+  +run() <<final>>
+  {abstract} #ejecutarCiclo()
+}
+interface Runnable <<interface>> #DBEAFE {
+  {abstract} +run()
+}
+
+' ===================== EVENTOS =====================
+interface OyenteEvento <<functional interface>> #FCE7F3 {
+  {abstract} +notificar(e : Evento)
+  +luego(o) : OyenteEvento <<default>>
+}
+class Evento <<record>> #DCFCE7 {
+  tipo : TipoEvento
+  mensaje : String
+  instante : LocalDateTime
+  {static} +de(tipo, mensaje) : Evento
+  +toString() : String
+}
+enum TipoEvento <<enumeration>> #DCFCE7 {
+  ALTA
+  CAMBIO_ESTADO
+  ALERTA
+  CANCELACION_AUTOMATICA
+}
+
+' ===================== PAQUETES DE DOMINIO =====================
+class "Modelo de dominio" as Dominio <<paquete modelo>> {
+  CatalogoConceptos
+  OrdenServicio (+Linea)
+  Cliente · Nivel · Estado
+  Folio · Cotizable
+  Concepto (+3 subtipos)
+  ReglaNegocioException
+}
+class "Programación funcional" as Funcional <<paquete funcional>> {
+  Regla<T> · Reglas
+  FabricaElemento<E,A>
+}
+
+' ===================== PERSISTENCIA =====================
+interface "Repositorio<T, K>" as Repo <<interface>> #DBEAFE {
+  {abstract} +guardar(t : T)
+  {abstract} +buscar(k : K) : Optional<T>
+  {abstract} +todos() : List<T>
+  {abstract} +eliminar(k : K) : boolean
+  +existe(k : K) : boolean <<default>>
+  +guardarTodos(it : Iterable<T>) <<default>>
+}
+interface "Repositorio.MapeadorFila<R>" as Mapeador <<interface miembro>> #DBEAFE {
+  {abstract} +mapear(rs : ResultSet) : R
+}
+class RepositorioConceptoSQLite #F1F5F9 {
+  {static} -RECONSTRUCTORES : Map<String, Reconstructor>
+  -bd : ConexionSQLite
+  -mapeador : MapeadorFila<Concepto>
+  {static} ~atributoDe(e) : String <<switch sellado>>
+  +guardar / buscar / todos / eliminar
+}
+interface "RepositorioConceptoSQLite.Reconstructor" as Reconstructor <<private interface>> #F1F5F9 {
+  +reconstruir(clave, nombre, precio, atributo) : Concepto
+}
+class RepositorioClienteSQLite #F1F5F9 {
+  -bd : ConexionSQLite
+  -mapeador : MapeadorFila<Cliente>
+  +guardar / buscar / todos / eliminar
+}
+class RepositorioOrdenServicioSQLite #F1F5F9 {
+  -bd : ConexionSQLite
+  -clientes : Repositorio<Cliente, Integer>
+  -elementos : Repositorio<Concepto, Folio>
+  +guardar(t) <<transacción>>
+  -reconstruir(c, rs) : OrdenServicio
+  +buscar / todos / eliminar
+}
+class ConexionSQLite <<AutoCloseable>> #F1F5F9 {
+  {static} -ESQUEMA : String[]
+  -conexion : Connection
+  <<static {}>> carga org.sqlite.JDBC
+  +ConexionSQLite(ruta)
+  +conexion() : Connection
+  +enTransaccion(t : TrabajoSQL<R>) : R
+  +close()
+}
+interface "ConexionSQLite.TrabajoSQL<R>" as TrabajoSQL <<functional interface miembro>> #DBEAFE {
+  {abstract} +ejecutar(c : Connection) : R  throws SQLException
+}
+class PersistenciaException <<exception>> #F1F5F9 {
+  +PersistenciaException(mensaje, causa)
+}
+class Respaldo <<utilidad>> #F1F5F9 {
+  {static} +ENCABEZADO = "Respaldo Taller v1"
+  {static} +exportar(path, catálogo, clientes, registros)
+  {static} +importar(path) : Contenido
+}
+class "Respaldo.Contenido" as Contenido <<record miembro>> #DCFCE7 {
+  encabezado : String
+  fecha : LocalDateTime
+  catalogo : CatalogoConceptos
+  clientes : List<Cliente>
+  registros : List<OrdenServicio>
+}
+class "SQLite (.db)" as DB <<base de datos>> #E2E8F0 {
+  concepto
+  cliente
+  orden
+  orden_linea
+}
+
+' ===================== RELACIONES =====================
+App ..> VentanaPrincipal : crea
+App ..> Taller : crea
+App ..> ConexionSQLite : crea
+Demos ..> Taller : usa
+UI ..  VentanaPrincipal : ej. de implementación
+VentanaPrincipal +-- VPInternos
+VentanaPrincipal --> "1" Taller : usa
+VentanaPrincipal ..> OyenteEvento : implementa (lambda)
+
+Taller +-- Monitor
+TareaPeriodica <|-- Monitor
+Runnable <|.. TareaPeriodica
+
+Taller o-- "0..*" OyenteEvento
+OyenteEvento ..> Evento
+Evento --> "1" TipoEvento
+Taller ..> TipoEvento : publica
+
+Taller --> Dominio
+Taller ..> Funcional
+Taller --> "3" Repo
+Taller ..> Respaldo
+Taller ..> ConexionSQLite : crea repos (ctor)
+
+Repo <|.. RepositorioConceptoSQLite
+Repo <|.. RepositorioClienteSQLite
+Repo <|.. RepositorioOrdenServicioSQLite
+Repo +-- Mapeador
+RepositorioConceptoSQLite +-- Reconstructor
+
+RepositorioConceptoSQLite --> ConexionSQLite
+RepositorioClienteSQLite --> ConexionSQLite
+RepositorioOrdenServicioSQLite --> ConexionSQLite
+
+ConexionSQLite +-- TrabajoSQL
+ConexionSQLite ..> PersistenciaException : lanza
+ConexionSQLite ..> DB : JDBC
+Respaldo +-- Contenido
+@enduml
