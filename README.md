@@ -46,9 +46,10 @@ P2_taller/
 │   ├── servicio/       Taller (fachada) y Taller.MonitorAvance
 │   ├── ui/             VentanaPrincipal (Swing)
 │   └── app/            App, DemoModelo, PruebasModelo
-├── diagramas/          Fuentes (.puml, .dot) e imágenes de los diagramas
-├── Imagenes/           Capturas de pantalla de la aplicación
-├── lib/                JAR de SQLite para compilar sin Maven
+├── diagramas/               Diagramas originales proporcionados por el profesor
+├── diagramas_actualizados/  Diagramas actualizados con las extensiones del proyecto
+├── Imagenes/                Capturas de pantalla de la aplicación
+├── lib/                     JAR de SQLite para compilar sin Maven
 ├── compilar.sh · probar.sh
 ├── pom.xml
 ├── BITACORA_IA.md
@@ -83,19 +84,33 @@ La base de datos `taller.db` se crea en el directorio desde el que se ejecuta el
 
 ## Diagramas
 
-En la carpeta [`diagramas/`](diagramas/) están los diagramas actualizados:
+Los diagramas actualizados con las extensiones del proyecto están en [`diagramas_actualizados/`](diagramas_actualizados/). La carpeta [`diagramas/`](diagramas/) conserva los diagramas originales del profesor, como referencia.
 
-| Diagrama | Fuente | Imagen |
+| Diagrama | Fuentes editables | Imagen |
 |---|---|---|
-| Clases del modelo (Figura 1) | `modelo.puml`, `modelo.dot` | `modelo.png` |
-| Paquetes y dependencias (Figura 2) | `arquitectura.dot` | `arquitectura.png` |
+| Figura 1. Clases del modelo | [`modelov2.puml`](diagramas_actualizados/modelov2.puml) · [`modelo.dot`](diagramas_actualizados/modelo.dot) | [`modelo.png`](diagramas_actualizados/modelo.png) |
+| Figura 2. Paquetes y dependencias | [`arquitectura.puml`](diagramas_actualizados/arquitectura.puml) · [`arquitectura.dot`](diagramas_actualizados/arquitectura.dot) | [`arquitectura.png`](diagramas_actualizados/arquitectura.png) |
 
-Para regenerar las imágenes:
+### Figura 1. Diagrama de clases del modelo
+
+Muestra la jerarquía sellada de `Concepto` (con sus tres subtipos y las capacidades `ConGarantia` y `Certificable`), la composición `OrdenServicio ◆ Linea`, el catálogo con su iterador interno, `Folio`, los enums `Nivel` y `Estado`, y los tipos funcionales (`Regla`, `Reglas`, `FabricaElemento`).
+
+![Figura 1. Diagrama de clases del modelo](diagramas_actualizados/modelo.png)
+
+### Figura 2. Paquetes y dependencias
+
+Muestra la fachada `Taller`, el monitor (`MonitorAvance` sobre `TareaPeriodica`), los eventos, los repositorios SQLite, el respaldo, la interfaz gráfica y los programas de la aplicación.
+
+![Figura 2. Paquetes y dependencias](diagramas_actualizados/arquitectura.png)
+
+### Regenerar las imágenes
 
 ```bash
-dot -Tpng diagramas/modelo.dot -o diagramas/modelo.png
-dot -Tpng diagramas/arquitectura.dot -o diagramas/arquitectura.png
-```
+dot -Tpng diagramas_actualizados/modelo.dot -o diagramas_actualizados/modelo.png
+dot -Tpng diagramas_actualizados/arquitectura.dot -o diagramas_actualizados/arquitectura.png
+```[README.md](README.md)
+
+Los archivos `.puml` se pueden abrir en [plantuml.com](https://www.plantuml.com/plantuml) o con el plugin de PlantUML de IntelliJ.
 
 ## Capturas de pantalla
 
